@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CiteKit Backend Deployment Guide - Digital Ocean</title>
+    <style>
+        :root {
+            --primary: #0069ff;
+            --secondary: #f3f5f9;
+            --text: #333;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --warning-bg: #fffbf0;
+            --warning-border: #f5c518;
+            --success: #28a745;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        h1 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            color: var(--primary);
+        }
+
+        h2 {
+            margin-top: 40px;
+            color: #444;
+        }
+
+        h3 {
+            margin-top: 25px;
+            color: #555;
+        }
+
+        .step {
+            background: var(--secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .critical-step {
+            background: var(--warning-bg);
+            border-left: 5px solid var(--warning-border);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .critical-label {
+            background: var(--warning-border);
+            color: #000;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-right: 10px;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: "Consolas", "Monaco", monospace;
+            color: #d63384;
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .checklist li.checked:before {
+            content: "☑";
+            color: var(--success);
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .diagram {
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🚀 CiteKit Backend Deployment Guide</h1>
+    <p>This is a complete, step-by-step guide to deploying the CiteKit backend to a <strong>Digital Ocean Droplet
+            (VPS)</strong>. Follow these instructions exactly to ensure a smooth deployment.</p>
+
+    <div class="diagram">
+        INTERNET
+        │
+        ▼
+        [ NGINX REVERSE PROXY ] (Handles SSL, Rate Limiting)
+        │
+        ▼
+        [ DOCKER CONTAINER: API ] ◄───► [ REDIS ] ◄───► [ DOCKER CONTAINER: WORKER ]
+    </div>
+
+    <h2>📋 Prerequisites</h2>
+    <ul class="checklist">
+        <li>Digital Ocean Account</li>
+        <li>A Domain Name (e.g., <code>yourdomain.com</code>)</li>
+        <li>Access to manage DNS records for your domain</li>
+        <li>SSH Client (Terminal on Mac/Linux, PowerShell/PuTTY on Windows)</li>
+    </ul>
+
+    <!-- STEP 1 -->
+    <div class="step">
+        <h2>Step 1: Create Your Droplet</h2>
+        <ol>
+            <li>Log in to <a href="https://cloud.digitalocean.com/droplets/new" target="_blank">Digital Ocean</a>.</li>
+            <li>Click <strong>Create</strong> -> <strong>Droplets</strong>.</li>
+            <li><strong>Region:</strong> Select the datacenter closest to your users (e.g., Bangalore, Singapore, New
+                York).</li>
+            <li><strong>Image:</strong> Choose <strong>Ubuntu 22.04 (LTS) x64</strong>.</li>
+            <li><strong>Size:</strong> Choose <strong>Basic</strong> -> <strong>Regular Disk</strong>.
+                <ul>
+                    <li>Minimum: <strong>$12/month (2GB RAM / 1 CPU)</strong></li>
+                    <li>Recommended: <strong>$24/month (4GB RAM / 2 CPU)</strong> for better performance.</li>
+                </ul>
+            </li>
+            <li><strong>Authentication:</strong> Select <strong>SSH Key</strong> (Highly Recommended) or Password.</li>
+            <li><strong>Hostname:</strong> Give it a name like <code>citekit-backend</code>.</li>
+            <li>Click <strong>Create Droplet</strong>.</li>
+        </ol>
+        <p><strong>Note:</strong> Once created, copy the <strong>IP Address</strong> (e.g., <code>159.203.x.x</code>).
+        </p>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+        <h2>Step 2: Configure DNS</h2>
+        <p>Go to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) and add an <strong>A Record</strong>.</p>
+        <table border="1" style="width:100%; border-collapse: collapse; text-align: left; margin-bottom: 20px;">
+            <tr style="background:#eee;">
+                <th>Type</th>
+                <th>Host/Name</th>
+                <th>Value/Target</th>
+                <th>TTL</th>
+            </tr>
+            <tr>
+                <td>A</td>
+                <td><code>api</code></td>
+                <td><code>YOUR_DROPLET_IP</code></td>
+                <td>Auto / 3600</td>
+            </tr>
+        </table>
+        <p>This will point <code>api.yourdomain.com</code> to your new server.</p>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+        <h2>Step 3: Initial Server Setup</h2>
+        <p>Open your terminal and SSH into your new server:</p>
+        <pre>ssh root@YOUR_DROPLET_IP</pre>
+
+        <p>Run the automated setup script. This installs Docker, configures the firewall, and creates the necessary
+            users.</p>
+        <pre>curl -sSL https://raw.githubusercontent.com/wantaiseo/backend/main/deploy/setup-droplet.sh | bash</pre>
+
+        <p><em>Wait for the script to complete. It may take a few minutes to install Docker.</em></p>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step">
+        <h2>Step 4: Clone & Configure (CRITICAL)</h2>
+        <p>Navigate to the app directory created by the setup script:</p>
+        <pre>cd /home/citekit/app</pre>
+
+        <p>Clone the backend repository:</p>
+        <pre>git clone https://github.com/wantaiseo/backend.git .</pre>
+
+        <div class="critical-step">
+            <h3><span class="critical-label">CRITICAL ACTION 1</span> Configure Environment Variables</h3>
+            <p>You MUST create the <code>.env</code> file and fill in your real secrets. The app <strong>will not
+                    work</strong> without this.</p>
+
+            <p>1. Copy the production template:</p>
+            <pre>cp .env.production .env</pre>
+
+            <p>2. Edit the file:</p>
+            <pre>nano .env</pre>
+
+            <p>3. <strong>CHANGE THESE VALUES:</strong></p>
+            <ul>
+                <li><code>GEMINI_API_KEY</code>: Your Google AI Studio key.</li>
+                <li><code>SUPABASE_URL</code> & <code>SUPABASE_KEY</code>: Your database credentials.</li>
+                <li><code>CORS_ORIGINS</code>: <strong>EXTREMELY IMPORTANT.</strong> Set this to your frontend URL.
+                    <br>Example: <code>https://your-frontend.vercel.app,https://yourdomain.com</code>
+                </li>
+                <li><code>JWT_SECRET</code>: Generate a random string (e.g., run <code>openssl rand -hex 32</code>
+                    locally).</li>
+            </ul>
+            <p>Press <code>Ctrl+X</code>, then <code>Y</code>, then <code>Enter</code> to save.</p>
+        </div>
+
+        <div class="critical-step">
+            <h3><span class="critical-label">CRITICAL ACTION 2</span> Update Nginx Configuration</h3>
+            <p>You need to tell the web server what your domain name is.</p>
+
+            <p>1. Open the configuration file:</p>
+            <pre>nano nginx/conf.d/api.conf</pre>
+
+            <p>2. Find every instance of <code>YOUR_DOMAIN.com</code> and replace it with
+                <code>api.yourdomain.com</code>.</p>
+            <p><em>Tip: In nano, you can use <code>Ctrl+\</code> to find and replace.</em></p>
+
+            <p>Press <code>Ctrl+X</code>, then <code>Y</code>, then <code>Enter</code> to save.</p>
+        </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step">
+        <h2>Step 5: Launch Application</h2>
+        <p>Run the main deployment script. This builds the Docker containers and starts the services.</p>
+        <pre>./deploy-digitalocean.sh</pre>
+
+        <p><strong>Success Check:</strong> You should see green "Healthy" messages for API, Worker, and Redis.</p>
+
+        <p>Test if it's running (via HTTP for now):</p>
+        <pre>curl http://api.yourdomain.com/health/live</pre>
+        <p>You should get: <code>{"status":"ok"}</code></p>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step">
+        <h2>Step 6: Setup SSL (HTTPS)</h2>
+        <p>Secure your API with a free Let's Encrypt certificate.</p>
+
+        <pre>./deploy/setup-ssl.sh api.yourdomain.com your-email@example.com</pre>
+
+        <p>This script will:</p>
+        <ul>
+            <li>Request a certificate from Let's Encrypt.</li>
+            <li>Configure Nginx to use HTTPS.</li>
+            <li>Set up auto-renewal.</li>
+        </ul>
+
+        <p><strong>Verify:</strong> Open <code>https://api.yourdomain.com/health/live</code> in your browser. You should
+            see the lock icon 🔒.</p>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step">
+        <h2>Step 7: Connect Frontend</h2>
+        <p>Now that your backend is live, you need to tell your frontend where to find it.</p>
+
+        <h3>If using Vercel:</h3>
+        <ol>
+            <li>Go to your project settings in Vercel.</li>
+            <li>Navigate to <strong>Environment Variables</strong>.</li>
+            <li>Add/Edit <code>VITE_API_URL</code>.</li>
+            <li>Value: <code>https://api.yourdomain.com</code> (No trailing slash).</li>
+            <li><strong>Redeploy</strong> your frontend for changes to take effect.</li>
+        </ol>
+
+        <h3>Razorpay Webhook</h3>
+        <p>Don't forget to update your Razorpay Dashboard:</p>
+        <ul>
+            <li><strong>Webhook URL:</strong> <code>https://api.yourdomain.com/webhooks/razorpay</code></li>
+        </ul>
+    </div>
+
+    <div class="step" style="background-color: #ffebee; border-left-color: #f44336;">
+        <h2>🆘 Troubleshooting</h2>
+
+        <h3>API not responding?</h3>
+        <pre>docker-compose -f docker-compose.production.yml logs -f api</pre>
+
+        <h3>CORS Errors in Browser?</h3>
+        <p>Check that <code>CORS_ORIGINS</code> in your backend <code>.env</code> file matches EXACTLY with your
+            frontend URL (check for trailing slashes, they generally shouldn't be there).</p>
+
+        <h3>Changes not showing up?</h3>
+        <p>If you edited code locally and pushed to GitHub:</p>
+        <pre>
+# On the server:
+git pull
+./deploy-digitalocean.sh
+        </pre>
+    </div>
+
+</body>
+
+</html>
