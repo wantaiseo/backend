@@ -1,0 +1,65 @@
+# FastAPI & Server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# HTTP & Async  
+httpx>=0.24,<0.28
+aiofiles
+
+# HTML Parsing & Content Extraction
+lxml-html-clean
+trafilatura
+beautifulsoup4
+
+# Browser Automation (JS rendering fallback)
+playwright
+
+# LLM - Gemini
+google-generativeai
+
+# Database - Supabase
+supabase
+
+# Payment Gateway - Razorpay
+razorpay>=1.4.1
+
+# Job Queue - Redis/Celery
+celery[redis]
+redis
+
+# Validation
+pydantic>=2.0
+pydantic-settings>=2.0
+email-validator
+
+# Utilities
+python-dotenv
+validators
+
+# ======================
+# OPTIONAL ENHANCEMENTS
+# ======================
+# For improved NER in facts.jsonld:
+# spacy>=3.5.0
+# python -m spacy download en_core_web_lg
+
+# For Wikidata entity linking:
+# wptools>=0.5.5
+
+# For schema validation:
+# jsonschema>=4.17.0
+
+# ======================
+# TESTING (dev only)
+# ======================
+# pytest>=8.0
+# pytest-asyncio>=0.23
+# pytest-cov>=4.0
+# httpx  # Already included above
+
+# ======================
+# LINTING (dev only)
+# ======================
+# ruff>=0.1.0
+# mypy>=1.0

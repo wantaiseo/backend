@@ -1,0 +1,85 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Local Data Files (Fallback storage)
+jobs.json
+pages.json
+payments.json
+discovered_urls.json
+
+# Output directory
+output/
+*.zip
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Redis dump
+dump.rdb
+
+# SSL Certificates (generated on server)
+certbot/
+
+# Test output files
+test_facts_output_*.json
