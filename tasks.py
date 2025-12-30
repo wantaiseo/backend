@@ -294,29 +294,9 @@ def compile_website_task(self, job_id: str, url: str, crawl_depth: str = "auto",
             output_data=output_data
         ))
 
-        # 📧 EMAIL RECEIPT (Optional - requires email_service module)
-        if user_email:
-            try:
-                from email_service import get_email_service
-                email_service = get_email_service()
-                
-                # Determine download link (use public URL if available, otherwise just mention it's ready)
-                link_to_send = public_url if public_url and public_url.startswith("http") else f"http://localhost:5173/dashboard"
-                
-                email_service.send_job_completion(
-                    to_email=user_email,
-                    job_id=job_id,
-                    download_link=link_to_send,
-                    score=geo_score
-                )
-            except ImportError:
-                # Email service not configured - this is OK, just skip
-                print(f"📧 Email service not configured, skipping notification for job {job_id}")
-            except Exception as e:
-                # Don't fail the job if email fails
-                print(f"❌ Failed to send email (non-critical): {e}")
-        else:
-            print(f"🔹 No email provided, skipping notification for job {job_id}")
+        # 📧 NOTE: Email is now sent AFTER PAYMENT in payments.py, not here.
+        # Compilation is free - email is only sent when user pays and unlocks the file.
+
 
         return {
             "status": "completed",

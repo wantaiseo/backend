@@ -227,6 +227,26 @@ async def verify_payment(
     
     print(f"✅ Payment verified: {request.razorpay_payment_id} for job {request.job_id}")
     
+    # 6. Send confirmation email with download link
+    try:
+        from email_service import get_email_service
+        
+        # User email is already in the auth context from get_current_user
+        user_email = user.get("email")
+        
+        if user_email and job.result_path:
+            email_service = get_email_service()
+            email_service.send_payment_confirmation(
+                to_email=user_email,
+                job_id=request.job_id,
+                domain=job.url.replace("https://", "").replace("http://", "").split("/")[0],
+                download_url=job.result_path,
+                geo_score=job.geo_score
+            )
+    except Exception as e:
+        # Don't fail payment verification if email fails
+        print(f"⚠️ Email notification failed (non-critical): {e}")
+    
     return {
         "success": True,
         "message": "Payment verified successfully",
