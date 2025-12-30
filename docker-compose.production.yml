@@ -85,7 +85,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.production
-    command: celery -A celery_app worker --loglevel=info --concurrency=2
+    command: celery -A celery_app worker --loglevel=info --concurrency=4 --prefetch-multiplier=1
     environment:
       - REDIS_URL=redis://redis:6379/0
     env_file:
@@ -102,7 +102,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 3G
 
   # ===========================================
   # Redis (Celery Message Broker)
