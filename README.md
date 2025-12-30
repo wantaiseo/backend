@@ -86,142 +86,42 @@ uvicorn main:app --reload --port 8000
 docker-compose up --build
 ```
 
-## 🌐 Deployment (Cloud Run)
+## 🌐 Deployment (Digital Ocean)
+ 
+ This project uses a standard VPS deployment on Digital Ocean with Docker Compose, Nginx, and Let's Encrypt for SSL.
+ 
+ ### Prerequisites
+ - Digital Ocean Droplet (Ubuntu 22.04 LTS)
+ - Domain name pointed to Droplet IP
+ - SSH access
+ 
+ ### Quick Deploy
+ 
+ ```bash
+ # 1. SSH into Droplet
+ ssh root@YOUR_DROPLET_IP
+ 
+ # 2. Clone Repository
+ git clone https://github.com/samayp42/backend.git .
+ 
+ # 3. Setup Secrets
+ cp .env.production .env
+ nano .env
+ 
+ # 4. Deploy
+ chmod +x deploy-digitalocean.sh
+ ./deploy-digitalocean.sh
+ ```
+ 
+ See [DEPLOY_DIGITALOCEAN.md](./docs/DEPLOY_DIGITALOCEAN.md) for the complete step-by-step guide including SSL setup and monitoring.
+ 
+ ## 💰 Cost Estimation (Digital Ocean)
+ 
+ | Spec | Cost/Month | Capacity |
+ |------|------------|----------|
+ | 2GB / 1 vCPU | $12 | ~1,000 compiles/mo |
+ | 4GB / 2 vCPU | $24 | ~5,000 compiles/mo |
 
-### Prerequisites
-- Google Cloud account with billing
-- Docker Desktop
-- gcloud CLI
-
-### Deploy
-
-```bash
-# 1. Set your project ID
-export GCP_PROJECT_ID="your-project-id"
-
-# 2. Create secrets in GCP
-./scripts/setup-secrets.sh
-
-# 3. Deploy
-./deploy.sh
-```
-
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
-
-## 📁 Project Structure
-
-```
-geo-compiler-api/
-├── main.py              # FastAPI application
-├── config.py            # Settings & environment config
-├── models.py            # Pydantic models
-├── database.py          # Supabase database layer
-├── auth.py              # Authentication routes
-├── payments.py          # Razorpay integration
-├── tasks.py             # Celery background tasks
-├── celery_app.py        # Celery configuration
-│
-├── discovery.py         # URL discovery engine
-├── extractor.py         # Content extraction
-├── classifier.py        # AI page classification
-├── synthesizer.py       # LLM.txt & MCP generation
-├── facts_generator.py   # facts.jsonld v2 (6-step pipeline)
-├── packager.py          # ZIP package creation
-├── citation_scorer.py   # AI-readiness scoring
-├── auditor.py           # Site auditing
-├── benchmark.py         # Competitor benchmarking
-├── schema_generator.py  # Schema.org generation
-│
-├── middleware.py        # Rate limiting, validation
-├── error_handler.py     # Error handling
-│
-├── static/              # Static files
-├── templates/           # HTML templates
-├── tests/               # Test suite
-├── docs/                # Documentation
-├── scripts/             # Utility scripts
-│
-├── Dockerfile           # Local Docker build
-├── Dockerfile.cloudrun  # Cloud Run optimized
-├── Dockerfile.worker    # Celery worker
-├── docker-compose.yml   # Local development
-├── deploy.sh            # Cloud Run deployment
-│
-├── requirements.txt     # Production dependencies
-├── requirements-dev.txt # Development dependencies
-├── .env.example         # Environment template
-└── README.md            # This file
-```
-
-
-## 🔧 API Endpoints
-
-### Public
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/health/live` | Liveness probe |
-| GET | `/health/ready` | Readiness probe |
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/auth/google` | Google OAuth redirect |
-| GET | `/auth/callback` | OAuth callback |
-| GET | `/auth/me` | Get current user |
-| POST | `/auth/logout` | Logout |
-
-### Compilation
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/compile` | Start compilation job |
-| GET | `/status/{job_id}` | Get job status |
-| GET | `/preview/{job_id}` | Preview results |
-| GET | `/download/{job_id}` | Download ZIP |
-| POST | `/cancel/{job_id}` | Cancel job |
-| GET | `/jobs` | List user's jobs |
-
-### Payments
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/payments/create-order` | Create Razorpay order |
-| POST | `/payments/verify` | Verify payment |
-| POST | `/payments/webhook` | Razorpay webhook |
-
-## ⚙️ Configuration
-
-All configuration is via environment variables. See [.env.example](.env.example).
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | ✅ | Google Gemini API key |
-| `SUPABASE_URL` | ✅ | Supabase project URL |
-| `SUPABASE_KEY` | ✅ | Supabase anon key |
-| `REDIS_URL` | ✅ | Redis connection URL |
-| `RAZORPAY_KEY_ID` | ✅ | Razorpay API key |
-| `RAZORPAY_KEY_SECRET` | ✅ | Razorpay secret |
-| `FRONTEND_URL` | ✅ | Frontend URL for CORS |
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=. --cov-report=html
-
-# Run specific test
-pytest tests/test_api.py -v
-```
-
-## 💰 Cost Estimation (Cloud Run)
-
-| Compiles/Month | Estimated Cost |
-|----------------|----------------|
-| 100 | ~$8 |
-| 500 | ~$12 |
-| 1000 | ~$20 |
 
 ## 📄 License
 
