@@ -39,66 +39,106 @@ class KnowledgeSynthesizer:
     MAX_CONTEXT_PAGES = 50
 
     # ============================================
-    # ELITE LLM.TXT PROMPTS
+    # ELITE LLM.TXT PROMPTS (v2 - Launch Quality)
     # Based on: llmstxt.org spec, Stripe implementation, Princeton GEO research
     # ============================================
     
-    LLM_TXT_SYSTEM = """You are a specialized Knowledge Engineer optimizing content for AI Agents (RAG).
-Your goal is to convert unstructured website content into a high-density, machine-readable Markdown format (/llms.txt).
+    LLM_TXT_SYSTEM = """You are a world-class Knowledge Engineer creating AI-readable documentation.
+Your goal is to create a comprehensive llms.txt file that helps AI assistants (ChatGPT, Claude, Gemini) understand and accurately cite this website.
+
+## YOUR MISSION
+Create a file that would make an AI assistant say "I have complete information about this business and can confidently recommend/cite them."
 
 ## CRITICAL PRINCIPLES
-1. **Information Density:** maximizing facts per token.
-2. **Structure:** AI agents need URL patterns and Glossaries to navigate.
-3. **No Fluff:** Remove all marketing language ("cutting-edge", "best-in-class", "solutions provider").
-4. **Accuracy:** Never hallucinate stats or URLs.
-5. **Adaptability:** Adapt the output structure to the type of website (E-commerce vs SaaS vs Blog).
+1. **Comprehensiveness:** Include EVERYTHING an AI needs to know - who they are, what they do, pricing, features, FAQs.
+2. **Information Density:** Maximize facts per token while remaining readable.
+3. **Structure:** Use clear sections with headers for easy navigation.
+4. **Accuracy:** Only use facts from the provided content. Never hallucinate.
+5. **FAQs:** ALWAYS include a FAQ section with at least 3-5 Q&As extracted from content.
+6. **All Pages:** List ALL significant pages from the website.
 
-## OUTPUT QUALITY CHECKS
-- Does the "Key Data" section contain actual numbers/metrics? (If not, omit it).
-- Does the "Terminology" section define domain-specific jargon? (If not, omit it).
-- Are the URL patterns strictly derived from the input list?
+## QUALITY STANDARDS (Your output will be graded on these)
+- Does it have a rich "About" section explaining who they are?
+- Does it list ALL key facts (pricing, features, contact info)?
+- Does it have a comprehensive FAQ section?
+- Are ALL website pages listed with proper URLs?
+- Would an AI confidently cite this business after reading?
 """
 
     LLM_TXT_USER_TEMPLATE = """# TASK
-Generate a world-class /llms.txt for **{site}**.
+Generate the BEST possible /llms.txt for **{site}** - this is a premium paid product, so quality must be exceptional.
 
 # INPUT DATA ({total_pages} analyzed pages)
 {page_summaries}
 
 # REQUIRED MARKDOWN STRUCTURE
-(Strictly follow this high-density layout. Omit sections if data is missing.)
+Generate this exact structure (include ALL sections, adapt content to what's available):
 
-# [Project Name]
+```
+# [Business/Project Name]
 
-> [One-sentence mission statement / summary]
+> [2-3 sentence comprehensive description of what this business does]
 
-# Key Data
-- [Metric Name]: [Value]
-(Extract specific numbers: e.g. "Pricing", "Year Founded", "User Count", "SKU Count")
-(If no metrics found, omit this section)
+## About [Business Name]
 
-# Core Documentation
-- [Page Title](URL): [When should an Agent cite this?]
+[Write 2-3 paragraphs explaining:
+- What the business/product is
+- Who their target audience is  
+- What makes them unique
+- Their mission or value proposition]
 
-# Data Structure / URL Patterns
-(Analyze the input URLs to find structural patterns. Examples of what to look for:)
-- **Resources:** `/blog/{{slug}}`, `/product/{{id}}`, `/docs/{{section}}`
-(If no consistent patterns exist, omit this section)
+**Website:** https://{site}
+**Contact:** [Extract email if found, or "See contact page"]
 
-# Terminology
-(Define domain-specific acronyms or jargon found in the content)
-- **[Term]:** [Definition]
-- **[Term]:** [Definition]
+## Key Facts
 
-## Features / Services
-- [Page Title](URL): [Description]
+- **Price:** [Extract pricing if available]
+- **Industry:** [What industry/category]
+- **Founded:** [Year if available]
+- [Add any other key metrics found: users, products, locations, etc.]
+
+## Core Features / What You Get
+
+1. **[Feature 1]** - [Description]
+2. **[Feature 2]** - [Description]
+3. **[Feature 3]** - [Description]
+[List all major features/services]
+
+## Pages
+
+[List ALL pages from the input data in this format:]
+- [Page Title]: https://... 
+- [Page Title]: https://...
+[Group by category if many pages: Products, Blog, Legal, etc.]
+
+## Frequently Asked Questions
+
+**Q: [Common question about this business]?**
+A: [Answer based on content]
+
+**Q: [Another question]?**
+A: [Answer]
+
+[Include 3-7 FAQs - infer likely questions from the content]
+
+## Why Choose [Business Name]
+
+[2-3 bullet points on competitive advantages or unique value]
+
+---
+*Last updated: [Current Date] | Source: Official website*
+```
 
 # RULES
-1. **Precision:** Use ONLY URLs provided in the input.
-2. **Glossary:** Extract definitions for acronyms (e.g., "SaaS", "API", "ROI").
-3. **Structure:** Group related links logically.
-4. **Output:** Return ONLY the Markdown content.
-"""
+1. **Use ONLY URLs from the input** - never invent URLs
+2. **Extract real facts** - pricing, features, contact info from the content
+3. **Write in third person** - "They offer..." not "We offer..."
+4. **Be comprehensive** - include as much detail as possible
+5. **FAQs are MANDATORY** - infer questions people would ask
+6. **Pages section is MANDATORY** - list ALL significant pages
+
+# OUTPUT
+Return ONLY the markdown content. No explanation, no code blocks."""
 
     async def generate_llm_txt(self, site: str, pages: list[PageData]) -> str:
         """
@@ -202,63 +242,93 @@ This package contains extracted data from **{len(pages)}** pages.
 """
 
     # ============================================
-    # ELITE MCP JSON PROMPTS
+    # ELITE MCP JSON PROMPTS (v2 - Launch Quality)
     # Based on Anthropic's Model Context Protocol specification
     # ============================================
 
     MCP_SYSTEM = """You are an expert in creating agent routing configurations based on the Model Context Protocol (MCP).
 
 ## PURPOSE OF MCP
-MCP enables AI agents to understand which URL to visit based on user intent. When a user asks ChatGPT or Claude a question, the AI may browse the web - your MCP file tells it exactly where to go.
+MCP enables AI agents to understand which URL to visit based on user intent. When a user asks ChatGPT or Claude a question, the AI may browse the web - your MCP file tells it exactly where to go for the best answer.
+
+## YOUR MISSION
+Create a comprehensive routing configuration that covers ALL important pages on the website. An AI agent should be able to find ANY relevant page using your configuration.
 
 ## QUALITY REQUIREMENTS
-- The "use_when" field is CRITICAL - it must describe specific user queries/intents
-- Include example questions that would trigger routing to this page
-- Priorities must reflect actual page importance
-- Only use URLs from the provided data
-- Output VALID JSON only (no markdown code blocks)
+1. **Comprehensive Coverage** - Include ALL significant pages (homepage, product, pricing, docs, blog, legal, contact)
+2. **Rich use_when** - Each endpoint must have detailed intent descriptions with example queries
+3. **Accurate Topics** - 5-8 relevant keywords per endpoint
+4. **Proper Priorities** - Reflect actual page importance
+5. **Only Real URLs** - Use only URLs from the provided data
 
-## USE_WHEN BEST PRACTICES
-Good: "User asks about pricing, costs, subscription plans, or 'how much does X cost'"
-Bad: "Pricing page"
+## USE_WHEN BEST PRACTICES (CRITICAL)
+EXCELLENT: "User asks about pricing, costs, subscription plans, 'how much does X cost', monthly fees, enterprise pricing, or wants to compare plans"
+BAD: "Pricing page"
 
-Good: "User wants to get started, create account, sign up, or asks 'how do I begin'"  
-Bad: "Getting started page"
+EXCELLENT: "User wants to get started, create account, sign up, begin using the product, or asks 'how do I begin', 'where do I sign up', 'how to register'"
+BAD: "Getting started page"
 
-The use_when should be written as if you're completing: "Route here when the..."
+EXCELLENT: "User asks about the company, who made this, company history, team, founders, 'who is behind this', mission statement, or company values"
+BAD: "About page"
+
+The use_when should answer: "Route here when the user..."
 """
 
-    MCP_USER_TEMPLATE = """Create MCP routing configuration for {site}.
+    MCP_USER_TEMPLATE = """Create a COMPREHENSIVE MCP routing configuration for {site}.
 
-## Page Data
+## Page Data (All pages on the site)
 {page_data}
 
-## Output Format
-Generate this exact JSON structure (no markdown, just JSON):
+## Required Output Format
+Generate this exact JSON structure (no markdown code blocks, just raw JSON):
 
 {{
+  "name": "[Business Name] – [Tagline if available]",
+  "description": "[2-3 sentence description of what this website/business does]",
   "site": "{site}",
-  "generated_at": "{timestamp}",
   "version": "1.0",
-  "description": "Routing configuration for AI agents browsing {site}",
+  "generator": "CiteKit",
+  "generated_at": "{timestamp}",
+  "llms_txt_url": "https://{site}/llms.txt",
+  "facts_jsonld_url": "https://{site}/facts.jsonld",
+  "contact": {{
+    "email": "[Extract any email found, or null]",
+    "support": "[Support email if different, or null]"
+  }},
   "endpoints": [
     {{
       "url": "https://...",
-      "description": "What information this page contains",
-      "use_when": "User asks about X, wants to Y, or queries like 'example question'",
-      "topics": ["keyword1", "keyword2", "keyword3"],
-      "priority": "critical|high|medium|low"
+      "description": "What information this page contains and why an AI should cite it",
+      "content_type": "text/html",
+      "priority": "critical|high|medium|low",
+      "topics": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+      "use_when": "User asks about X, wants to Y, or queries like 'example question 1', 'example question 2'. Route here when the user needs information about Z."
     }}
   ]
 }}
 
-## Priority Guide
-- critical: Homepage, main product page, pricing (max 3 pages)
-- high: Docs home, features, API, getting started (max 5 pages)
-- medium: Tutorials, blog posts, case studies
-- low: Legal pages, old content, support articles
+## Priority Assignment Rules
+- **critical**: Homepage, main product/service page, pricing page (max 3)
+- **high**: Features, documentation home, API reference, getting started (max 5)
+- **medium**: Blog posts, tutorials, case studies, integrations
+- **low**: Legal pages (privacy, terms), old content, support articles
 
-Generate routing for the 15-20 most important pages only."""
+## MANDATORY Endpoints to Include
+1. Homepage (critical)
+2. Pricing page if exists (critical)
+3. Main product/features page (high)
+4. Documentation/Docs if exists (high)
+5. About page if exists (medium)
+6. Blog listing if exists (medium)
+7. Contact page if exists (medium)
+8. Legal pages - privacy, terms (low)
+
+## Rules
+1. Include 15-30 endpoints covering all significant pages
+2. Every endpoint MUST have 5-8 topics
+3. Every use_when MUST include 2-3 example user queries
+4. Extract contact emails if visible in page content
+5. Output ONLY valid JSON - no explanations, no markdown"""
 
     async def generate_mcp_json(self, site: str, pages: list[PageData]) -> MCPOutput:
         """
@@ -292,7 +362,8 @@ Generate routing for the 15-20 most important pages only."""
                 [self.MCP_SYSTEM, prompt],
                 generation_config=genai.GenerationConfig(
                     temperature=0.1,
-                    max_output_tokens=4000
+                    max_output_tokens=8000,  # Increased for comprehensive routing
+                    top_p=0.9
                 )
             )
 

@@ -683,7 +683,7 @@ class FactsJsonLdGenerator:
         return linked_entities
     
     # ============================================
-    # STEP 4: SCHEMA GENERATION
+    # STEP 4: SCHEMA GENERATION (v2 - Launch Quality)
     # ============================================
     
     def generate_schema(
@@ -695,111 +695,150 @@ class FactsJsonLdGenerator:
         domain: str
     ) -> Dict:
         """
-        Step 4: Generate facts.jsonld Schema.org structure.
+        Step 4: Generate comprehensive facts.jsonld Schema.org structure.
+        
+        Outputs @graph with:
+        - Organization (always)
+        - WebSite (always)
+        - SoftwareApplication (if SaaS/software detected)
+        - FAQPage (if FAQs can be inferred)
         """
         base_url = f"https://{domain}"
         now = datetime.utcnow().isoformat() + "Z"
+        today = datetime.utcnow().strftime("%Y-%m-%d")
         
-        # Build author entity
-        author = None
-        author_entity = next((e for e in entities if e.type == "Person"), None)
-        if author_entity or metadata.get("author_name"):
-            author = {
-                "@type": "Person",
-                "@id": f"{base_url}#author",
-                "name": author_entity.text if author_entity else metadata.get("author_name"),
-            }
-            if metadata.get("author_title"):
-                author["jobTitle"] = metadata["author_title"]
-        
-        # Build organization entity
+        # Extract key info
         org_name = metadata.get("org_name") or self._extract_company_name_from_domain(domain)
+        description = metadata.get("description", "")
+        slogan = metadata.get("slogan", "")
+        
+        # ---- 1. ORGANIZATION ENTITY ----
         organization = {
             "@type": "Organization",
-            "@id": f"{base_url}#organization",
+            "@id": f"{base_url}/#organization",
             "name": org_name,
             "url": base_url,
+            "description": description,
         }
         
+        if slogan:
+            organization["slogan"] = slogan
+        
+        # Add logo if available
+        if metadata.get("logo"):
+            organization["logo"] = metadata["logo"]
+        
+        # Add email if found
+        if metadata.get("email"):
+            organization["email"] = metadata["email"]
+        
+        # Add founding date if found
+        if metadata.get("founding_date"):
+            organization["foundingDate"] = metadata["founding_date"]
+        
+        # Add social profiles (CRITICAL for entity disambiguation)
         if social_links:
             organization["sameAs"] = social_links
         
-        if author:
-            author["affiliation"] = {"@id": f"{base_url}#organization"}
-        
-        # Build facts array for schema
-        facts_schema = []
-        for fact in facts:
-            fact_entry = {
-                "@type": "Claim",
-                "@id": f"{base_url}#fact-{fact.id}",
-                "text": fact.statement,
-                "dateCreated": datetime.utcnow().strftime("%Y-%m-%d"),
-            }
-            
-            # Add type-specific fields
-            if fact.type == FactType.STATISTIC:
-                fact_entry["@type"] = "Observation"
-                fact_entry["name"] = "Statistic"
-            elif fact.type == FactType.DEFINITION:
-                fact_entry["@type"] = "DefinedTerm"
-                if fact.term:
-                    fact_entry["name"] = fact.term
-            elif fact.type == FactType.PRIMARY_ANSWER:
-                fact_entry["position"] = "primary"
-                fact_entry["@type"] = "Answer"
-            elif fact.type == FactType.QUOTE:
-                fact_entry["@type"] = "Quotation"
-            
-            facts_schema.append(fact_entry)
-        
-        # Build main article schema
-        article = {
-            "@type": "Article",
-            "@id": f"{base_url}#article",
+        # ---- 2. WEBSITE ENTITY ----
+        website = {
+            "@type": "WebSite",
+            "@id": f"{base_url}/#website",
             "url": base_url,
-            "name": metadata.get("title", org_name),
-            "description": metadata.get("description", ""),
-            "headline": metadata.get("title", org_name),
-            "datePublished": now,
-            "dateModified": now,
+            "name": org_name,
+            "description": description,
+            "publisher": {"@id": f"{base_url}/#organization"}
         }
         
-        if author:
-            article["author"] = author
+        # ---- 3. SOFTWARE APPLICATION (if SaaS/tool/app detected) ----
+        software_app = None
+        is_software = any(kw in description.lower() for kw in [
+            'saas', 'software', 'app', 'platform', 'tool', 'api', 
+            'service', 'generate', 'automate', 'dashboard'
+        ])
         
-        article["publisher"] = organization
-        
-        # Add mentions (entities mentioned in content)
-        mentions = []
-        for entity in entities[:5]:
-            mention = {
-                "@type": entity.type,
-                "name": entity.text
+        if is_software or metadata.get("is_software"):
+            software_app = {
+                "@type": "SoftwareApplication",
+                "@id": f"{base_url}/#product",
+                "name": org_name,
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web",
+                "description": description,
             }
-            if entity.same_as:
-                mention["sameAs"] = entity.same_as
-            mentions.append(mention)
+            
+            # Add pricing if available
+            if metadata.get("price"):
+                software_app["offers"] = {
+                    "@type": "Offer",
+                    "price": str(metadata["price"]).replace("$", "").replace("₹", ""),
+                    "priceCurrency": metadata.get("currency", "USD"),
+                    "description": metadata.get("price_description", "")
+                }
+            
+            # Add features if available
+            features = metadata.get("features", [])
+            if features:
+                software_app["featureList"] = features[:10]  # Limit to 10
         
-        if mentions:
-            article["mentions"] = mentions
+        # ---- 4. FAQ PAGE (infer FAQs from definitions and content) ----
+        faq_page = None
+        faq_questions = []
         
-        # Build final schema
+        # Generate FAQs from definitions
+        for fact in facts:
+            if fact.type == FactType.DEFINITION and fact.term:
+                faq_questions.append({
+                    "@type": "Question",
+                    "name": f"What is {fact.term}?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": fact.statement
+                    }
+                })
+        
+        # Add common inferred FAQs based on metadata
+        if metadata.get("price"):
+            faq_questions.append({
+                "@type": "Question",
+                "name": f"How much does {org_name} cost?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": f"{org_name} costs {metadata.get('price')}. {metadata.get('price_description', '')}"
+                }
+            })
+        
+        # Add "What is X" FAQ
+        if description:
+            faq_questions.append({
+                "@type": "Question",
+                "name": f"What is {org_name}?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": description
+                }
+            })
+        
+        if faq_questions:
+            faq_page = {
+                "@type": "FAQPage",
+                "@id": f"{base_url}/#faq",
+                "mainEntity": faq_questions[:7]  # Limit to 7 FAQs
+            }
+        
+        # ---- BUILD FINAL @GRAPH ----
+        graph = [organization, website]
+        
+        if software_app:
+            graph.append(software_app)
+        
+        if faq_page:
+            graph.append(faq_page)
+        
         schema = {
             "@context": "https://schema.org",
-            "@graph": [
-                organization,
-                article
-            ]
+            "@graph": graph
         }
-        
-        # Add author to graph if exists
-        if author:
-            schema["@graph"].insert(1, author)
-        
-        # Add facts as separate array (custom extension for AI)
-        if facts_schema:
-            schema["facts"] = facts_schema
         
         return schema
     
@@ -1029,7 +1068,7 @@ Return ONLY the JSON array, no other text."""
                 enhancement_prompt,
                 generation_config=genai.GenerationConfig(
                     temperature=0.1,
-                    max_output_tokens=1000
+                    max_output_tokens=2000  # Increased for richer output
                 )
             )
             
