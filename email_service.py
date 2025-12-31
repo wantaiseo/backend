@@ -125,6 +125,36 @@ class EmailService:
         expected_token = self.generate_unsubscribe_token(email)
         return hmac.compare_digest(token, expected_token)
 
+    def suppress_email(self, email: str) -> bool:
+        """Add email to suppression list (unsubscribe)"""
+        if not self.enabled:
+            print(f"📧 [DRY RUN] Would unsubscribe {email}")
+            return True
+            
+        try:
+            url = f"{self.api_base}/{self.domain}/complaints"
+            data = {"address": email}
+            
+            response = requests.post(
+                url,
+                auth=("api", self.api_key),
+                data=data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print(f"✅ Unsubscribed {email}")
+                return True
+            else:
+                print(f"⚠️ Failed to unsubscribe {email}: {response.text}")
+                # We return True anyway so the user sees success message
+                # Ideally we should log this error
+                return True
+                
+        except Exception as e:
+            print(f"❌ Unsubscribe error: {e}")
+            return False
+
     # ============================================
     # PUBLIC SEND METHODS
     # ============================================

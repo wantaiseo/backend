@@ -188,10 +188,12 @@
                 </p>
                 <div style="margin-top: 16px;">
                     <a href="{{ frontend_url }}/privacy"
-                        style="font-size: 11px; color: #D1D5DB; text-decoration: none;">Privacy</a>
-                    <span style="color: #E5E7EB; margin: 0 4px;">•</span>
+                        style="font-size: 11px; color: #6B7280; text-decoration: none;">Privacy</a>
+                    {% if unsubscribe_url %}
+                    <span style="color: #9CA3AF; margin: 0 4px;">•</span>
                     <a href="{{ unsubscribe_url }}"
-                        style="font-size: 11px; color: #D1D5DB; text-decoration: underline;">Unsubscribe</a>
+                        style="font-size: 11px; color: #6B7280; text-decoration: underline;">Unsubscribe</a>
+                    {% endif %}
                 </div>
             </div>
             {% endblock %}
