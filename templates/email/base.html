@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ subject }}</title>
+    <!--[if mso]>
+    <style>td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: 'Segoe UI', sans-serif; mso-line-height-rule: exactly;}</style>
+    <![endif]-->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            background-color: #F2F4F7;
+            color: #111827;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .hero-section {
+            background: #000000;
+            padding: 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 48px 40px;
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: #111827;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        p {
+            margin: 0 0 24px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4B5563;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #111827;
+            color: #ffffff;
+            padding: 16px 32px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .cta-button:hover {
+            background: #000000;
+        }
+
+        .checklist-item {
+            margin-bottom: 20px;
+            display: table;
+            width: 100%;
+        }
+
+        .checklist-icon {
+            display: table-cell;
+            width: 32px;
+            padding-right: 16px;
+            vertical-align: top;
+        }
+
+        .checklist-content {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .checklist-title {
+            font-weight: 600;
+            color: #111827;
+            font-size: 15px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .checklist-desc {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+
+        .footer {
+            background: #F9FAFB;
+            padding: 32px 40px;
+            border-top: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #9CA3AF;
+            line-height: 1.5;
+        }
+
+        .social-link {
+            color: #6B7280;
+            text-decoration: none;
+            margin: 0 8px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-container {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .content-section {
+                padding: 32px 24px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Outer Spacer -->
+    <div style="padding: 40px 0;">
+
+        <!-- Main Card -->
+        <div class="email-container">
+
+            {% block header %}{% endblock %}
+
+            {% block hero %}{% endblock %}
+
+            <div class="content-section">
+                {% block content %}{% endblock %}
+            </div>
+
+            {% block footer %}
+            <!-- Footer -->
+            <div class="footer">
+                <div style="margin-bottom: 24px;">
+                    <a href="https://twitter.com/citekitai" class="social-link">Twitter</a>
+                    <a href="{{ frontend_url }}/blog" class="social-link">Blog</a>
+                    <a href="mailto:hello@wantaiseo.com" class="social-link">Support</a>
+                </div>
+                <p class="footer-text">
+                    © {{ current_year }} Jayso Labs Private Limited<br>
+                    123 AI Boulevard, Tech Park, Bangalore, India
+                </p>
+                <div style="margin-top: 16px;">
+                    <a href="{{ frontend_url }}/privacy"
+                        style="font-size: 11px; color: #D1D5DB; text-decoration: none;">Privacy</a>
+                    <span style="color: #E5E7EB; margin: 0 4px;">•</span>
+                    <a href="{{ unsubscribe_url }}"
+                        style="font-size: 11px; color: #D1D5DB; text-decoration: underline;">Unsubscribe</a>
+                </div>
+            </div>
+            {% endblock %}
+
+        </div>
+
+        <!-- Bottom Branding -->
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td align="center" style="padding-top: 24px;">
+                    <p style="margin: 0; font-size: 12px; color: #9CA3AF; font-family: 'Inter', sans-serif;">
+                        Automated by CiteKit Engine
+                    </p>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</body>
+
+</html>

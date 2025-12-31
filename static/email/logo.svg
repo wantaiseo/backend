@@ -1,0 +1,11 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Main Bracket - Black for contrast -->
+    <path
+        d="M35 20H20C14.4772 20 10 24.4772 10 30V70C10 75.5228 14.4772 80 20 80H35C37.7614 80 40 77.7614 40 75V65C40 62.2386 37.7614 60 35 60H30V40H35C37.7614 40 40 37.7614 40 35V25C40 22.2386 37.7614 20 35 20Z"
+        fill="#1a1a1a"
+    />
+    <!-- Top Mark -->
+    <rect x="50" y="20" width="40" height="25" rx="5" fill="#1a1a1a" />
+    <!-- Bottom Mark - Brand Blue Accent -->
+    <rect x="50" y="55" width="40" height="25" rx="5" fill="#2563EB" />
+</svg>

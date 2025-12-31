@@ -1,0 +1,67 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<!-- Success Header -->
+<div style="text-align: center; margin-bottom: 40px;">
+    <div
+        style="display: inline-block; width: 64px; height: 64px; background: #ECFDF5; border-radius: 50%; color: #059669; line-height: 64px; font-size: 32px; margin-bottom: 24px;">
+        ✓</div>
+    <h1 style="font-size: 28px; letter-spacing: -1px; margin-bottom: 8px;">Order Confirmed</h1>
+    <p style="font-size: 16px; color: #6B7280;">
+        Your AI Optimizaton Kit for <strong style="color: #111;">{{ domain }}</strong> is ready.
+    </p>
+</div>
+
+<!-- Digital Asset Card (The "Package") -->
+<div
+    style="background: #111827; border-radius: 12px; padding: 32px; color: #ffffff; margin-bottom: 40px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+    <div style="display: table; width: 100%;">
+        <div style="display: table-cell; vertical-align: middle;">
+            <h3 style="margin: 0 0 4px; font-size: 18px; color: #fff;">CiteKit Premium Package</h3>
+            <p style="margin: 0; font-size: 14px; color: #9CA3AF;">v1.0 • Generated {{ invoice_date }}</p>
+        </div>
+        <div style="display: table-cell; vertical-align: middle; text-align: right;">
+            {% if geo_score %}
+            <div
+                style="display: inline-block; text-align: center; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 8px;">
+                <span
+                    style="display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #D1D5DB;">Score</span>
+                <span
+                    style="display: block; font-size: 24px; font-weight: 700; color: {% if geo_score >= 70 %}#34D399{% elif geo_score >= 40 %}#FBBF24{% else %}#F87171{% endif %};">{{
+                    geo_score }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 24px 0;"></div>
+
+    <!-- File List -->
+    <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #D1D5DB; line-height: 1.8;">
+        ✓ llms.txt (Standard)<br>
+        ✓ mcp.json (Context Protocol)<br>
+        ✓ facts.jsonld (Identity)<br>
+        ✓ schema_org_graph.json
+    </div>
+
+    <!-- Download CTA -->
+    <div style="margin-top: 24px;">
+        <a href="{{ download_url }}"
+            style="display: block; background: #ffffff; color: #000000; text-align: center; padding: 14px; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 14px;">
+            Download ZIP Archive
+        </a>
+    </div>
+</div>
+
+<!-- Deployment Instructions (Mini) -->
+<div style="padding: 0 16px;">
+    <h4 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9CA3AF; margin-bottom: 16px;">
+        Next Steps</h4>
+    <p style="font-size: 14px; color: #4B5563; line-height: 1.6; margin-bottom: 12px;">
+        1. Extract the downloaded ZIP file.<br>
+        2. Upload the files to the <strong>root directory</strong> of <code>{{ domain }}</code>.<br>
+        3. Verify by visiting <code>https://{{ domain }}/llms.txt</code>.
+    </p>
+</div>
+{% endblock %}

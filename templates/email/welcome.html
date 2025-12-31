@@ -1,0 +1,94 @@
+{% extends "email/base.html" %}
+
+{% block hero %}
+<!-- Hero Image -->
+<div style="background-color: #000; width: 100%;">
+    <a href="{{ frontend_url }}/dashboard">
+        <img src="{{ asset_url }}/hero-welcome.png" alt="Welcome to the Future"
+            style="width: 100%; height: auto; display: block; border-bottom: 1px solid #eee;">
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Typography-Led Greeting -->
+<div style="margin-bottom: 40px;">
+    <h1 style="font-size: 36px; letter-spacing: -1.5px; margin-bottom: 16px;">
+        You just became<br>
+        <span style="color: #2563EB;">AI-Fluent.</span>
+    </h1>
+    <p style="font-size: 17px; color: #4B5563; line-height: 1.6;">
+        Welcome to the 1%. While most websites are still fighting for blue links on Google, you are now preparing to be
+        cited by the AI models that are replacing search.
+    </p>
+</div>
+
+<!-- Primary Call to Action -->
+<div style="margin-bottom: 48px;">
+    <a href="{{ frontend_url }}/dashboard" class="cta-button">
+        Launch Your Dashboard &rarr;
+    </a>
+</div>
+
+<!-- "What's Next" Section -->
+<div style="background: #F9FAFB; border-radius: 12px; padding: 32px; border: 1px solid #F3F4F6;">
+    <h3
+        style="margin: 0 0 24px; font-size: 13px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; letter-spacing: 1px;">
+        Your Onboarding Checklist
+    </h3>
+
+    <!-- Item 1 -->
+    <div class="checklist-item">
+        <div class="checklist-icon">
+            <div
+                style="width: 24px; height: 24px; background: #E0E7FF; border-radius: 50%; color: #3730A3; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700;">
+                1</div>
+        </div>
+        <div class="checklist-content">
+            <span class="checklist-title">Run a Visibility Audit</span>
+            <span class="checklist-desc">See exactly how ChatGPT and Claude perceive your content right now.</span>
+        </div>
+    </div>
+
+    <!-- Item 2 -->
+    <div class="checklist-item">
+        <div class="checklist-icon">
+            <div
+                style="width: 24px; height: 24px; background: #E0E7FF; border-radius: 50%; color: #3730A3; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700;">
+                2</div>
+        </div>
+        <div class="checklist-content">
+            <span class="checklist-title">Generate Standard Files</span>
+            <span class="checklist-desc">Create the <code
+                    style="background: #fff; padding: 2px 5px; border-radius: 4px; border: 1px solid #eee; font-size: 12px;">llms.txt</code>
+                and <code
+                    style="background: #fff; padding: 2px 5px; border-radius: 4px; border: 1px solid #eee; font-size: 12px;">mcp.json</code>
+                files that act as an API for your content.</span>
+        </div>
+    </div>
+
+    <!-- Item 3 -->
+    <div class="checklist-item" style="margin-bottom: 0;">
+        <div class="checklist-icon">
+            <div
+                style="width: 24px; height: 24px; background: #111; border-radius: 50%; color: #fff; text-align: center; line-height: 24px; font-size: 14px; font-weight: 400;">
+                →</div>
+        </div>
+        <div class="checklist-content">
+            <span class="checklist-title">Deploy to Root</span>
+            <span class="checklist-desc">Upload the files. Verify the connection. Watch your GEO score climb.</span>
+        </div>
+    </div>
+</div>
+
+<!-- Founder Note / Vision -->
+<div style="margin-top: 48px; border-top: 1px solid #E5E7EB; padding-top: 32px;">
+    <p style="font-size: 15px; color: #6B7280; font-style: italic;">
+        "The web is shifting from retrieval to synthesis. CiteKit ensures you're part of the answer."
+    </p>
+    <div style="display: flex; align-items: center; margin-top: 16px;">
+        <!-- Placeholder for signature or avatar if needed -->
+        <span style="font-size: 14px; font-weight: 600; color: #111;">Team CiteKit</span>
+    </div>
+</div>
+{% endblock %}
