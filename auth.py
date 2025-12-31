@@ -24,6 +24,9 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleLoginRequest(BaseModel):
+    redirect_url: Optional[str] = None
+
 class AuthResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -133,7 +136,7 @@ async def signup(request: SignupRequest):
 
 
 @router.post("/login/google")
-async def login_google():
+async def login_google(request: Optional[GoogleLoginRequest] = None):
     """
     Get the OAuth URL for Google login.
     """
@@ -141,9 +144,13 @@ async def login_google():
         supabase = get_supabase()
         settings = get_settings()
         
-        # Use FRONTEND_URL from env, fallback to localhost for dev
-        frontend_url = getattr(settings, 'frontend_url', None) or "http://localhost:5173"
-        redirect_url = f"{frontend_url}/auth/callback"
+        # Determine Redirect URL
+        if request and request.redirect_url:
+            redirect_url = request.redirect_url
+        else:
+            # Use FRONTEND_URL from env, fallback to localhost for dev
+            frontend_url = getattr(settings, 'frontend_url', None) or "http://localhost:5173"
+            redirect_url = f"{frontend_url}/auth/callback"
         
         data = supabase.auth.sign_in_with_oauth({
             "provider": "google",
