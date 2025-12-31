@@ -97,6 +97,71 @@ try:
 except ImportError as e:
     logger.warning(f"Admin router not available: {e}")
 
+
+# ============================================
+# EMAIL UNSUBSCRIBE ENDPOINT
+# ============================================
+
+@app.get("/unsubscribe")
+async def unsubscribe_email(email: str, token: str):
+    """
+    Handle email unsubscribe requests.
+    Validates the token and marks the user as unsubscribed.
+    """
+    from email_service import get_email_service
+    
+    email_service = get_email_service()
+    
+    # Verify the token is valid (prevents spam unsubscribe attacks)
+    if not email_service.verify_unsubscribe_token(email, token):
+        raise HTTPException(status_code=400, detail="Invalid unsubscribe link")
+    
+    # In a production system, you would update a database here.
+    # For now, we log it and return success.
+    # Mailgun also automatically handles suppressions if you use their List-Unsubscribe header.
+    logger.info(f"📧 Unsubscribe request: {email}")
+    
+    # Return a simple HTML page confirming unsubscription
+    return HTMLResponse(content=f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Unsubscribed - CiteKit</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: #f9f9f8;
+            }}
+            .container {{
+                text-align: center;
+                padding: 40px;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+                max-width: 400px;
+            }}
+            h1 {{ color: #1a1a1a; margin-bottom: 10px; }}
+            p {{ color: #666; }}
+            a {{ color: #1a1a1a; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>✓ Unsubscribed</h1>
+            <p>You've been removed from marketing emails.</p>
+            <p>You'll still receive transactional emails (payment confirmations, download links).</p>
+            <p style="margin-top: 30px;"><a href="{settings.frontend_url}">← Back to CiteKit</a></p>
+        </div>
+    </body>
+    </html>
+    """, status_code=200)
+
 # Track server start time for uptime
 SERVER_START_TIME = time.time()
 

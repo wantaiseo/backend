@@ -93,6 +93,14 @@ async def signup(request: SignupRequest):
         if response.user is None:
             raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
         
+        # Send welcome email (non-blocking)
+        try:
+            from email_service import get_email_service
+            email_service = get_email_service()
+            email_service.send_welcome_email(to_email=request.email)
+        except Exception as email_err:
+            print(f"⚠️ Welcome email failed (non-critical): {email_err}")
+        
         # Check if email confirmation is required
         if response.session is None:
             return AuthResponse(

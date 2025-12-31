@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     # Example: "https://myapp.com,https://www.myapp.com"
     allowed_origins: str = ""
     
+    # Email Configuration (Mailgun)
+    mailgun_api_key: str = ""
+    mailgun_domain: str = ""
+    email_from: str = ""
+    
     # Admin email (for admin panel access)
     admin_email: str = "samaypatel0402@gmail.com"
 

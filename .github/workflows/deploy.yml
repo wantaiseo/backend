@@ -1,0 +1,54 @@
+# GitHub Actions Workflow: Auto-Deploy Backend to DigitalOcean
+# Triggers on push to main branch
+# SSHs into droplet, pulls latest code, rebuilds Docker containers
+
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    name: Deploy to DigitalOcean
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🚀 Deploy to Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            echo "📦 Starting deployment..."
+            
+            # Navigate to backend directory
+            cd /root/backend
+            
+            # Pull latest code
+            echo "⬇️ Pulling latest code..."
+            git pull origin main
+            
+            # Rebuild and restart containers
+            echo "🐳 Rebuilding Docker containers..."
+            docker-compose -f docker-compose.production.yml down
+            docker-compose -f docker-compose.production.yml build --no-cache
+            docker-compose -f docker-compose.production.yml up -d
+            
+            # Clean up old images
+            echo "🧹 Cleaning up..."
+            docker image prune -f
+            
+            echo "✅ Deployment complete!"
+
+      - name: 📢 Notify Success
+        if: success()
+        run: echo "Deployment successful! 🎉"
+
+      - name: ❌ Notify Failure  
+        if: failure()
+        run: echo "Deployment failed! Check the logs above."

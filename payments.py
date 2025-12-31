@@ -227,7 +227,7 @@ async def verify_payment(
     
     print(f"✅ Payment verified: {request.razorpay_payment_id} for job {request.job_id}")
     
-    # 6. Send confirmation email with download link
+    # 6. Send confirmation email with download link and invoice
     try:
         from email_service import get_email_service
         
@@ -241,6 +241,9 @@ async def verify_payment(
                 job_id=request.job_id,
                 domain=job.url.replace("https://", "").replace("http://", "").split("/")[0],
                 download_url=job.result_path,
+                payment_id=request.razorpay_payment_id,
+                amount_paise=order.get("amount", 84000),
+                currency=order.get("currency", "INR"),
                 geo_score=job.geo_score
             )
     except Exception as e:
