@@ -3,6 +3,7 @@ CiteKit – Authentication Module
 Uses Supabase Auth for secure user management
 """
 
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -173,7 +174,28 @@ async def exchange_code(code: str):
         
         if response.user is None or response.session is None:
              raise HTTPException(status_code=400, detail="Invalid code or code expired")
-             
+        
+        # Check if new user (approximate via created_at timestamp)
+        # Send welcome email only if account is fresher than 2 minutes
+        try:
+            # Handle string vs datetime object form of created_at
+            created_at_str = str(response.user.created_at)
+            # Basic ISO parsing (works for Supabase format like 2023-10-10T10:10:10.123Z)
+            created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+            
+            # Helper for current UTC time
+            now = datetime.now(timezone.utc)
+            
+            if (now - created_at).total_seconds() < 120:
+                print(f"🎉 New Google User Detected: {response.user.email}")
+                from email_service import get_email_service
+                get_email_service().send_welcome_email(to_email=response.user.email)
+            else:
+                age = int((now - created_at).total_seconds())
+                print(f"ℹ️ Google Login: User {response.user.email} is not new (Age: {age}s).")
+        except Exception as e:
+            print(f"⚠️ Failed to check new user status: {e}")
+
         return AuthResponse(
             access_token=response.session.access_token,
             refresh_token=response.session.refresh_token,
@@ -264,3 +286,33 @@ async def get_me(user: dict = Depends(get_current_user)):
         email=user["email"],
         created_at=user["created_at"]
     )
+
+
+@router.post("/check-welcome")
+async def check_welcome_email(user: dict = Depends(get_current_user)):
+    """
+    Trigger welcome email if user is new (Implicit Flow support).
+    """
+    try:
+        # Handle string vs datetime object form of created_at
+        created_at_str = str(user.get("created_at"))
+        # Basic ISO parsing (works for Supabase format like 2023-10-10T10:10:10.123Z)
+        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+        
+        # Helper for current UTC time
+        now = datetime.now(timezone.utc)
+        
+        # If created in last 2 minutes
+        if (now - created_at).total_seconds() < 120:
+            print(f"🎉 New User Detected (Check Endpoint): {user['email']}")
+            from email_service import get_email_service
+            get_email_service().send_welcome_email(to_email=user["email"])
+            return {"status": "sent", "message": "Welcome email sent"}
+        else:
+            age = int((now - created_at).total_seconds())
+            print(f"ℹ️ Welcome Check: User {user['email']} is not new (Age: {age}s). Skipping email.")
+            return {"status": "skipped", "message": "User not new"}
+        
+    except Exception as e:
+        print(f"⚠️ Welcome check failed: {e}")
+        return {"status": "error", "message": str(e)}

@@ -16,16 +16,16 @@ class EmailService:
     """
     
     def __init__(self):
-        self.api_key = os.getenv("MAILGUN_API_KEY")
-        self.domain = os.getenv("MAILGUN_DOMAIN")
-        self.from_email = os.getenv("EMAIL_FROM", "CiteKit <hello@citekit.com>")
+        settings = get_settings()
+        self.api_key = settings.mailgun_api_key
+        self.domain = settings.mailgun_domain
+        self.from_email = settings.email_from or "CiteKit <hello@citekit.com>"
         self.enabled = bool(self.api_key and self.domain)
         
         # Mailgun API endpoint
         self.api_base = os.getenv("MAILGUN_API_BASE", "https://api.mailgun.net/v3")
         
         # Frontend URL for unsubscribe links
-        settings = get_settings()
         self.frontend_url = settings.frontend_url or "https://citekit.com"
         
         if not self.enabled:
@@ -108,7 +108,7 @@ class EmailService:
 
     def generate_unsubscribe_token(self, email: str) -> str:
         """Generate a secure unsubscribe token"""
-        secret = os.getenv("MAILGUN_API_KEY", "default-secret")
+        secret = self.api_key or "default-secret"
         return hmac.new(
             secret.encode(),
             email.lower().encode(),
