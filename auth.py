@@ -148,8 +148,8 @@ async def login_google(request: Optional[GoogleLoginRequest] = None):
         if request and request.redirect_url:
             redirect_url = request.redirect_url
         else:
-            # Use FRONTEND_URL from env, fallback to localhost for dev
-            frontend_url = getattr(settings, 'frontend_url', None) or "http://localhost:5173"
+            # Use FRONTEND_URL from env, fallback to Production (wantaiseo.com)
+            frontend_url = getattr(settings, 'frontend_url', None) or "https://wantaiseo.com"
             redirect_url = f"{frontend_url}/auth/callback"
         
         data = supabase.auth.sign_in_with_oauth({
