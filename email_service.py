@@ -28,8 +28,13 @@ class EmailService:
         # Frontend URL for unsubscribe links
         self.frontend_url = settings.frontend_url or "https://citekit.com"
         
-        if not self.enabled:
-            print("⚠️ Email service disabled: MAILGUN_API_KEY or MAILGUN_DOMAIN not configured")
+        # Detailed logging for debugging
+        if self.enabled:
+            print(f"✅ Email service enabled: domain={self.domain}, from={self.from_email}")
+        else:
+            print(f"⚠️ Email service DISABLED!")
+            print(f"   - MAILGUN_API_KEY: {'SET' if self.api_key else 'MISSING'}")
+            print(f"   - MAILGUN_DOMAIN: {self.domain or 'MISSING'}")
 
         # Setup Jinja2 Template Environment
         template_dir = Path(__file__).parent / "templates"
@@ -161,23 +166,30 @@ class EmailService:
 
     def send_welcome_email(self, to_email: str, user_name: str = None) -> bool:
         """Send welcome email after signup"""
+        print(f"📧 [Welcome Email] Attempting to send to: {to_email}")
         name = user_name or to_email.split('@')[0].title()
         
-        html_content = self._render_template("email/welcome.html", {
-            "name": name,
-            "email": to_email,
-            "subject": f"Welcome to CiteKit, {name}! 🚀"
-        })
+        try:
+            html_content = self._render_template("email/welcome.html", {
+                "name": name,
+                "email": to_email,
+                "subject": f"Welcome to CiteKit, {name}! 🚀"
+            })
+        except Exception as e:
+            print(f"❌ [Welcome Email] Template rendering failed: {e}")
+            return False
         
         text_content = f"Welcome to CiteKit, {name}!\n\nStart here: {self.frontend_url}/dashboard"
         
-        return self.send_email(
+        result = self.send_email(
             to_email=to_email,
             subject=f"Welcome to CiteKit – Let's make your site AI-ready 🚀",
             html_content=html_content,
             text_content=text_content,
             tags=["welcome", "onboarding"]
         )
+        print(f"📧 [Welcome Email] Result: {'SUCCESS' if result else 'FAILED'}")
+        return result
 
     def send_payment_confirmation(
         self,
