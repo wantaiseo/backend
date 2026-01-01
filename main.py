@@ -278,15 +278,26 @@ async def compile_website(
     """
     Start a website compilation job.
     Accepts a URL and returns a job_id for tracking progress.
+    
+    Free Audit Limit:
+    - Users get 2 free audits
+    - After using 2 free audits, they must pay for at least one audit to unlock more
+    - Each payment unlocks 1 additional audit
     """
     try:
         db = get_database()
 
-        # 1. REMOVE UPFRONT PAYMENT CHECK (Freemium Flow)
-        # The compilation is free (Audit First), download is paid.
+        # 🔒 FREE AUDIT LIMIT CHECK
+        # Users get N free audits (configurable). After that, they need to pay for previous audits to unlock more.
+        settings = get_settings()
+        can_create, reason = await db.can_user_create_audit(user["id"], settings.free_audit_limit)
+        
+        if not can_create:
+            raise HTTPException(
+                status_code=402,  # Payment Required
+                detail=reason
+            )
 
-        # ⚡ 2. CHECK CACHE (Enabled for Performance)
-        # If a valid result exists for this URL, reuse it to save time/compute
         # ⚡ 2. CHECK CACHE - DISABLED BY USER REQUEST
         # (Removed complex caching logic to ensure stability)
 
@@ -318,6 +329,8 @@ async def compile_website(
             status=JobStatus.PENDING,
             message="Compilation job started. Use /status/{job_id} to track progress."
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (like 402)
     except Exception as e:
         import traceback
         traceback.print_exc() # Log to server console

@@ -31,7 +31,9 @@ class Settings(BaseSettings):
     # $10 USD ≈ ₹840 INR = 84000 paise (smallest unit)
     payment_amount_paise: int = 84000  # Amount in smallest currency unit
     payment_currency: str = "INR"  # INR for India, USD for international
-
+    
+    # Free Tier Configuration
+    free_audit_limit: int = 2  # Number of free audits before payment required
     
     # Frontend URL (for OAuth redirects and CORS)
     frontend_url: str = "http://localhost:5173"

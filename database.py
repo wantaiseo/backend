@@ -263,6 +263,110 @@ class Database:
         )
         return result.count if result.count is not None else 0
 
+    async def get_user_free_audit_count(self, user_id: str) -> int:
+        """
+        Get count of FREE audits (jobs without payment) for a user.
+        A job is considered "free" if there's no paid payment_order for it.
+        """
+        try:
+            # 1. Get total job count for user
+            total_jobs_result = (
+                self.client.table("jobs")
+                .select("*", count="exact", head=True)
+                .eq("user_id", user_id)
+                .execute()
+            )
+            total_jobs = total_jobs_result.count or 0
+            
+            # 2. Get paid job count for user
+            paid_jobs_result = (
+                self.client.table("payment_orders")
+                .select("*", count="exact", head=True)
+                .eq("user_id", user_id)
+                .eq("status", "paid")
+                .execute()
+            )
+            paid_jobs = paid_jobs_result.count or 0
+            
+            # Free audits = total jobs - paid jobs
+            free_count = max(0, total_jobs - paid_jobs)
+            return free_count
+            
+        except Exception as e:
+            print(f"Error counting free audits: {e}")
+            # On error, be permissive - allow the audit
+            return 0
+
+    async def get_user_paid_job_count(self, user_id: str) -> int:
+        """
+        Get count of PAID jobs for a user.
+        Used for determining if user can create more free audits.
+        """
+        try:
+            result = (
+                self.client.table("payment_orders")
+                .select("*", count="exact", head=True)
+                .eq("user_id", user_id)
+                .eq("status", "paid")
+                .execute()
+            )
+            return result.count or 0
+        except Exception as e:
+            print(f"Error counting paid jobs: {e}")
+            return 0
+
+    async def can_user_create_audit(self, user_id: str, free_audit_limit: int = 2) -> tuple[bool, str]:
+        """
+        Check if user can create a new audit based on free audit limit.
+        
+        Rules:
+        - Users get `free_audit_limit` free audits (default: 2)
+        - After using free audits, they need at least 1 paid job to unlock more
+        - Each paid job unlocks 1 additional audit slot
+        
+        Formula: allowed_audits = free_audit_limit + paid_count
+        
+        Returns: (can_create: bool, reason: str)
+        """
+        try:
+            # Get counts
+            total_jobs_result = (
+                self.client.table("jobs")
+                .select("*", count="exact", head=True)
+                .eq("user_id", user_id)
+                .execute()
+            )
+            total_jobs = total_jobs_result.count or 0
+            
+            paid_jobs_result = (
+                self.client.table("payment_orders")
+                .select("*", count="exact", head=True)
+                .eq("user_id", user_id)
+                .eq("status", "paid")
+                .execute()
+            )
+            paid_count = paid_jobs_result.count or 0
+            
+            # Calculate allowed audits
+            # Users get free_audit_limit free + 1 for each payment
+            allowed_audits = free_audit_limit + paid_count
+            
+            print(f"📊 Audit limit check: user={user_id[:8]}..., total_jobs={total_jobs}, paid={paid_count}, allowed={allowed_audits}")
+            
+            if total_jobs < allowed_audits:
+                return True, "OK"
+            else:
+                remaining_free = max(0, free_audit_limit - (total_jobs - paid_count))
+                if paid_count == 0:
+                    return False, f"You've used your {free_audit_limit} free audits. Please purchase a previous audit to unlock more."
+                else:
+                    return False, f"You've used all your audit credits ({allowed_audits} total). Purchase another audit to continue."
+                    
+        except Exception as e:
+            print(f"Error in audit limit check: {e}")
+            # On database error, be permissive
+            return True, "OK"
+
     async def find_recent_completed_job(self, url: str) -> Optional[CompileJob]:
         """Find a completed job for this URL (Simple Caching)"""
         result = (
