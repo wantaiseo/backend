@@ -144,6 +144,7 @@ async def signup(request: SignupRequest):
 async def login_google(request: Optional[GoogleLoginRequest] = None):
     """
     Get the OAuth URL for Google login.
+    Uses implicit flow to return tokens directly in URL hash.
     """
     try:
         supabase = get_supabase()
@@ -157,10 +158,16 @@ async def login_google(request: Optional[GoogleLoginRequest] = None):
             frontend_url = getattr(settings, 'frontend_url', None) or "https://wantaiseo.com"
             redirect_url = f"{frontend_url}/auth/callback"
         
+        # Use implicit flow - tokens come directly in URL hash
+        # This avoids PKCE code verifier issues between frontend and backend
         data = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
-                "redirect_to": redirect_url
+                "redirect_to": redirect_url,
+                "skip_browser_redirect": True,  # We handle redirect ourselves
+                "query_params": {
+                    "response_type": "token"  # Force implicit flow (tokens in hash)
+                }
             }
         })
         
