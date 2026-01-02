@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     razorpay_webhook_secret: str = ""  # From Razorpay Dashboard > Webhooks
     
     # Pricing Configuration
-    # $10 USD ≈ ₹840 INR = 84000 paise (smallest unit)
-    payment_amount_paise: int = 84000  # Amount in smallest currency unit
+    # $10 USD ≈ ₹900 INR = 90000 paise (smallest unit)
+    payment_amount_paise: int = 90000  # Amount in smallest currency unit
     payment_currency: str = "INR"  # INR for India, USD for international
     
     # Free Tier Configuration
