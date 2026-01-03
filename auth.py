@@ -98,6 +98,19 @@ async def signup(request: SignupRequest):
         if response.user is None:
             raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
         
+        # Check if user already exists (Supabase returns user but with empty identities for existing users)
+        # Also check if email was already confirmed (means existing user)
+        user_identities = getattr(response.user, 'identities', None)
+        email_confirmed = getattr(response.user, 'email_confirmed_at', None)
+        
+        # If identities is empty list or email already confirmed, user exists
+        if (user_identities is not None and len(user_identities) == 0) or email_confirmed:
+            print(f"ℹ️ [SIGNUP] User already exists: {request.email}")
+            raise HTTPException(
+                status_code=400, 
+                detail="An account with this email already exists. Please log in instead."
+            )
+        
         print(f"✅ [SIGNUP] User created successfully: {request.email}")
         
         # Send welcome email (non-blocking)
@@ -133,6 +146,9 @@ async def signup(request: SignupRequest):
             },
             message="Account created successfully!"
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is (e.g., user already exists)
+        raise
     except Exception as e:
         error_msg = str(e)
         if "already registered" in error_msg.lower():
@@ -335,3 +351,77 @@ async def check_welcome_email(user: dict = Depends(get_current_user)):
     except Exception as e:
         print(f"⚠️ Welcome check failed: {e}")
         return {"status": "error", "message": str(e)}
+
+
+# ============================================
+# PASSWORD RESET
+# ============================================
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    access_token: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    """
+    Send password reset email via Supabase.
+    """
+    try:
+        supabase = get_supabase()
+        settings = get_settings()
+        
+        # Get frontend URL for redirect
+        frontend_url = settings.frontend_url or "https://wantaiseo.com"
+        redirect_url = f"{frontend_url}/reset-password"
+        
+        # Trigger Supabase password reset email
+        supabase.auth.reset_password_email(
+            request.email,
+            options={
+                "redirect_to": redirect_url
+            }
+        )
+        
+        return {
+            "success": True,
+            "message": "If an account exists with this email, you will receive a password reset link."
+        }
+    except Exception as e:
+        # Don't reveal if email exists or not (security)
+        print(f"⚠️ Password reset request failed: {e}")
+        return {
+            "success": True,
+            "message": "If an account exists with this email, you will receive a password reset link."
+        }
+
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """
+    Reset password using access token from email link.
+    """
+    try:
+        supabase = get_supabase()
+        
+        # Set session with the access token from the email link
+        # Then update the password
+        response = supabase.auth.update_user({
+            "password": request.new_password
+        })
+        
+        if response.user is None:
+            raise HTTPException(status_code=400, detail="Password reset failed. The link may have expired.")
+        
+        return {
+            "success": True,
+            "message": "Password updated successfully! You can now log in with your new password."
+        }
+    except Exception as e:
+        error_msg = str(e)
+        print(f"⚠️ Password reset failed: {error_msg}")
+        raise HTTPException(status_code=400, detail="Password reset failed. Please request a new reset link.")
+
