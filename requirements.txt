@@ -1,6 +1,7 @@
 # FastAPI & Server
 fastapi
 uvicorn[standard]
+gunicorn
 jinja2
 python-multipart
 
@@ -67,3 +68,4 @@ validators
 # ======================
 # ruff>=0.1.0
 # mypy>=1.0
+gunicorn

@@ -60,25 +60,12 @@ setup_error_handlers(app)
 
 # Dynamic CORS configuration (supports local dev + production)
 settings = get_settings()
-
-# Build CORS origins list - explicitly include production URLs
-cors_origins = list(settings.cors_origins)  # Start with config
-# Always add production URLs explicitly
-production_origins = [
-    "https://wantaiseo.com",
-    "https://www.wantaiseo.com",
-]
-for origin in production_origins:
-    if origin not in cors_origins:
-        cors_origins.append(origin)
-
-logger.info(f"CORS Origins: {cors_origins}")
+logger.info(f"CORS Origins: {settings.cors_origins_list}")
 logger.info(f"Running on Cloud Run: {settings.is_cloud_run}")
 
-# IMPORTANT: Add CORS middleware FIRST (will run first in request chain)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
