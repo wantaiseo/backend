@@ -22,8 +22,16 @@ router = APIRouter(prefix="/payment", tags=["Payments"])
 # REQUEST/RESPONSE MODELS
 # ============================================
 
+# Pricing by country
+PRICING_CONFIG = {
+    "IN": {"amount": 90000, "currency": "INR"},  # ₹900 in paise
+    "DEFAULT": {"amount": 1000, "currency": "USD"},  # $10 in cents
+}
+
+
 class CreateOrderRequest(BaseModel):
     job_id: str
+    country: Optional[str] = None  # Country code for pricing (e.g., 'IN' for India)
 
 
 class CreateOrderResponse(BaseModel):
@@ -113,18 +121,21 @@ async def create_payment_order(
     # 4. Create new Razorpay order
     client = get_razorpay_client()
     
-    # Amount in smallest currency unit (paise for INR, cents for USD)
-    amount_paise = settings.payment_amount_paise
-    currency = settings.payment_currency
+    # Get pricing based on country (defaults to USD if not India)
+    country = (request.country or "").upper()
+    pricing = PRICING_CONFIG.get(country, PRICING_CONFIG["DEFAULT"])
+    amount = pricing["amount"]
+    currency = pricing["currency"]
     
     order_data = {
-        "amount": amount_paise,
+        "amount": amount,
         "currency": currency,
         "receipt": f"geo_{request.job_id[:8]}",
         "notes": {
             "job_id": request.job_id,
             "user_id": user["id"],
-            "product": "CiteKit Kit"
+            "product": "CiteKit Kit",
+            "country": country or "UNKNOWN"
         }
     }
     
@@ -138,13 +149,13 @@ async def create_payment_order(
         job_id=request.job_id,
         user_id=user["id"],
         razorpay_order_id=razorpay_order["id"],
-        amount=amount_paise,
+        amount=amount,
         currency=currency
     )
     
     return CreateOrderResponse(
         order_id=razorpay_order["id"],
-        amount=amount_paise,
+        amount=amount,
         currency=currency,
         key_id=settings.razorpay_key_id
     )
