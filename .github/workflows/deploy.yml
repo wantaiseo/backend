@@ -43,7 +43,7 @@ jobs:
             echo "🐳 Rebuilding Docker containers..."
             docker compose -f docker-compose.production.yml down
             docker compose -f docker-compose.production.yml build
-            docker compose -f docker-compose.production.yml up -d --force-recreate
+            docker compose -f docker-compose.production.yml up -d --force-recreate --remove-orphans
             
             # Wait for services to be healthy
             echo "⏳ Waiting for services to start..."
