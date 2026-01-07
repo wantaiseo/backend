@@ -1,3 +1,8 @@
+# ============================================================
+# ⚠️  CRITICAL PRODUCTION FILE - DO NOT EDIT WITHOUT READING:
+#     backend/HOSTING_INFRASTRUCTURE.md
+# ============================================================
+#
 # GitHub Actions Workflow: Auto-Deploy Backend to DigitalOcean
 # Triggers on push to main branch
 # SSHs into droplet, pulls latest code, rebuilds Docker containers

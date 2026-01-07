@@ -200,6 +200,37 @@ docker compose -f docker-compose.production.yml logs -f worker
 
 ---
 
+## ⚠️ How to Safely Modify Protected Files
+
+The following files have warning headers and are CRITICAL to production:
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.production.yml` | Docker service definitions |
+| `nginx/conf.d/api.conf` | Nginx routing + SSL |
+| `.github/workflows/deploy.yml` | CI/CD pipeline |
+
+### Before Editing:
+1. **READ THIS ENTIRE DOCUMENT**
+2. Understand what each file does
+3. Test changes locally if possible
+4. Coordinate with team - changes trigger auto-deploy
+
+### Safe Edit Process:
+1. Create a feature branch: `git checkout -b fix/infrastructure-change`
+2. Make your changes
+3. Push and create a PR for review
+4. Only merge after verification
+5. Monitor deployment logs after merge
+
+### Emergency Rollback:
+```bash
+git revert HEAD
+git push origin main
+```
+
+---
+
 ## AI Instructions
 
 **BEFORE making any changes to:**
