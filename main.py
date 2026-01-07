@@ -98,6 +98,15 @@ try:
 except ImportError as e:
     logger.warning(f"Admin router not available: {e}")
 
+# Include early access routes
+try:
+    from early_access import router as early_access_router
+    app.include_router(early_access_router)
+    logger.info("Early Access router loaded")
+except ImportError as e:
+    logger.warning(f"Early Access router not available: {e}")
+
+
 
 # ============================================
 # EMAIL UNSUBSCRIBE ENDPOINT
@@ -699,6 +708,7 @@ async def list_jobs(
     db = get_database()
     jobs = await db.get_user_jobs(user["id"], limit=limit, token=user.get("token"))
     return jobs
+
 
 
 # ============================================

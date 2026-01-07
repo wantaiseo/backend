@@ -4,119 +4,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CitationVault Report — {{DOMAIN}}</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+    <title>CiteKit Report — {{DOMAIN}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0a0a0a;
-            --surface: #151515;
-            --surface-2: #1a1a1a;
-            --border: #2a2a2a;
-            --text: #fafafa;
-            --text-muted: #888;
-            --accent: #3b82f6;
-            --green: #22c55e;
-            --yellow: #eab308;
-            --red: #ef4444;
-            --orange: #f97316;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html,
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #FAFAFA;
+            color: #111;
             line-height: 1.6;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0 24px;
         }
 
         /* Header */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 2rem;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
+            background: #fff;
+            border-bottom: 1px solid #E5E5E5;
+            padding: 16px 24px;
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: blur(10px);
+        }
+
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 10px;
             font-weight: 800;
-            font-size: 1.25rem;
-            letter-spacing: -0.02em;
+            font-size: 18px;
         }
 
         .logo-icon {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #fff;
             font-size: 14px;
         }
 
         .header-meta {
+            font-size: 13px;
+            color: #666;
             text-align: right;
-            font-size: 0.875rem;
-            color: var(--text-muted);
         }
 
         .header-meta strong {
-            color: var(--text);
+            color: #111;
         }
 
-        /* Hero Score Section */
+        /* Hero */
         .hero {
+            background: #fff;
+            border-bottom: 1px solid #E5E5E5;
+            padding: 48px 24px;
             text-align: center;
-            padding: 4rem 2rem;
-            background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
-            border-bottom: 1px solid var(--border);
         }
 
         .domain-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 2rem;
+            display: inline-block;
+            padding: 8px 16px;
+            background: #F5F5F5;
+            border: 1px solid #E5E5E5;
+            border-radius: 100px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 24px;
         }
 
         .domain-badge strong {
-            color: var(--text);
+            color: #111;
+        }
+
+        .score-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
         .score-circle {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 2rem;
+            width: 160px;
+            height: 160px;
             position: relative;
+            margin-bottom: 16px;
         }
 
         .score-circle svg {
@@ -127,7 +127,7 @@
 
         .score-circle-bg {
             fill: none;
-            stroke: var(--surface-2);
+            stroke: #F0F0F0;
             stroke-width: 12;
         }
 
@@ -135,7 +135,6 @@
             fill: none;
             stroke-width: 12;
             stroke-linecap: round;
-            transition: stroke-dashoffset 1s ease-out;
         }
 
         .score-number {
@@ -147,410 +146,665 @@
         }
 
         .score-number .value {
-            font-size: 3.5rem;
+            font-size: 48px;
             font-weight: 800;
-            letter-spacing: -0.02em;
+            color: #111;
         }
 
         .score-number .max {
-            font-size: 1.5rem;
-            color: var(--text-muted);
+            font-size: 18px;
+            color: #999;
         }
 
         .score-label {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         .score-description {
-            color: var(--text-muted);
+            color: #666;
+            font-size: 15px;
             max-width: 400px;
             margin: 0 auto;
         }
 
-        /* Score Breakdown */
+        /* Breakdown Grid */
         .breakdown {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1rem;
-            margin-top: 3rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 500px;
+            margin: 32px auto 0;
         }
 
         .breakdown-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
+            background: #F9F9F9;
+            border: 1px solid #E8E8E8;
+            border-radius: 12px;
+            padding: 16px;
         }
 
-        .breakdown-card-header {
+        .breakdown-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 10px;
         }
 
-        .breakdown-card-title {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            font-weight: 500;
+        .breakdown-title {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .breakdown-card-score {
-            font-size: 1.5rem;
+        .breakdown-score {
+            font-size: 16px;
             font-weight: 700;
+            color: #111;
         }
 
         .breakdown-bar {
-            height: 8px;
-            background: var(--surface-2);
-            border-radius: 4px;
+            height: 6px;
+            background: #E8E8E8;
+            border-radius: 3px;
             overflow: hidden;
         }
 
         .breakdown-bar-fill {
             height: 100%;
-            border-radius: 4px;
-            transition: width 1s ease-out;
+            border-radius: 3px;
         }
 
-        /* Sections */
+        /* Section */
         .section {
-            margin: 3rem 0;
+            padding: 40px 0;
         }
 
         .section-title {
-            font-size: 1.5rem;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            margin-bottom: 8px;
+            color: #111;
         }
 
-        .section-title-icon {
+        .section-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 32px;
+        }
+
+        .alert-banner.success {
+            background: #F0FDF4;
+            border-color: #BBF7D0;
+        }
+
+        .alert-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #DC2626;
+            margin-bottom: 4px;
+        }
+
+        .alert-banner.success .alert-title {
+            color: #16A34A;
+        }
+
+        .alert-text {
+            font-size: 14px;
+            color: #7F1D1D;
+        }
+
+        .alert-banner.success .alert-text {
+            color: #166534;
+        }
+
+        /* Steps */
+        .step {
+            background: #fff;
+            border: 1px solid #E5E5E5;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .step-header {
+            padding: 20px;
+            border-bottom: 1px solid #F0F0F0;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .step-num {
             width: 32px;
             height: 32px;
-            background: var(--surface-2);
+            background: #3B82F6;
+            color: #fff;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        /* Issues List */
-        .issues-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .issue-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-
-        .issue-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
             flex-shrink: 0;
-            font-size: 12px;
         }
 
-        .issue-icon.critical {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--red);
-        }
-
-        .issue-icon.warning {
-            background: rgba(234, 179, 8, 0.2);
-            color: var(--yellow);
-        }
-
-        .issue-icon.info {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent);
-        }
-
-        .issue-content {
+        .step-info {
             flex: 1;
+            min-width: 0;
         }
 
-        .issue-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
+        .step-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 4px;
         }
 
-        .issue-description {
-            font-size: 0.875rem;
-            color: var(--text-muted);
+        .step-desc {
+            font-size: 14px;
+            color: #666;
         }
 
-        .issue-affected {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-            font-family: 'JetBrains Mono', monospace;
+        .step-badge {
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
         }
 
-        /* Stats Grid */
+        .step-badge.critical {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .step-badge.important {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .step-badge.optional {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .step-content {
+            padding: 20px;
+            background: #FAFAFA;
+        }
+
+        .code-box {
+            background: #111;
+            color: #10B981;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-bottom: 16px;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .tip-box {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 13px;
+            color: #1E40AF;
+        }
+
+        .tip-box strong {
+            color: #1E3A8A;
+        }
+
+        /* Stats */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
 
         .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: #fff;
+            border: 1px solid #E5E5E5;
             border-radius: 12px;
-            padding: 1.25rem;
+            padding: 20px;
             text-align: center;
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 32px;
             font-weight: 800;
-            margin-bottom: 0.25rem;
+            color: #111;
+            margin-bottom: 4px;
         }
 
         .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-muted);
+            font-size: 13px;
+            color: #666;
         }
 
-        /* Files Section */
-        .files-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+        /* Files */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .file-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
+        .file-item {
+            background: #fff;
+            border: 1px solid #E5E5E5;
+            border-radius: 10px;
+            padding: 16px;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 14px;
             text-decoration: none;
-            color: var(--text);
-            transition: all 0.2s;
+            color: inherit;
+            transition: border-color 0.2s;
         }
 
-        .file-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
+        .file-item:hover {
+            border-color: #3B82F6;
         }
 
         .file-icon {
             width: 40px;
             height: 40px;
-            background: var(--surface-2);
+            background: #F5F5F5;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
+            flex-shrink: 0;
         }
 
         .file-info {
             flex: 1;
+            min-width: 0;
         }
 
         .file-name {
             font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.875rem;
+            font-size: 14px;
+            color: #111;
+            margin-bottom: 2px;
         }
 
         .file-desc {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            font-size: 13px;
+            color: #666;
+        }
+
+        .file-badge {
+            background: #DCFCE7;
+            color: #16A34A;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        /* Issues */
+        .issue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .issue-item {
+            background: #fff;
+            border: 1px solid #E5E5E5;
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            gap: 14px;
+        }
+
+        .issue-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .issue-icon.critical {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .issue-icon.warning {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .issue-icon.info {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .issue-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #111;
+            margin-bottom: 4px;
+        }
+
+        .issue-description {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .issue-affected {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            background: #F5F5F5;
+            padding: 8px 10px;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+
+        /* Verify */
+        .verify-box {
+            background: #fff;
+            border: 1px solid #E5E5E5;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 40px;
+        }
+
+        .verify-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #111;
+        }
+
+        .verify-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .verify-card {
+            background: #FAFAFA;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .verify-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #111;
+        }
+
+        .verify-card p {
+            font-size: 13px;
+            color: #666;
         }
 
         /* Footer */
         .footer {
             text-align: center;
-            padding: 3rem 2rem;
-            border-top: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 0.875rem;
+            padding: 40px 24px;
+            border-top: 1px solid #E5E5E5;
+            background: #fff;
+            margin-top: 40px;
+        }
+
+        .footer-logo {
+            font-weight: 800;
+            font-size: 18px;
+            color: #111;
+            margin-bottom: 8px;
+        }
+
+        .footer p {
+            font-size: 13px;
+            color: #666;
         }
 
         .footer a {
-            color: var(--accent);
+            color: #3B82F6;
             text-decoration: none;
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .header {
+        @media (max-width: 600px) {
+            .header-inner {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 8px;
                 text-align: center;
             }
 
-            .hero {
-                padding: 2rem 1rem;
+            .header-meta {
+                text-align: center;
             }
 
-            .score-circle {
-                width: 160px;
-                height: 160px;
+            .breakdown {
+                grid-template-columns: 1fr;
             }
 
-            .score-number .value {
-                font-size: 2.5rem;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .step-header {
+                flex-wrap: wrap;
             }
-        }
 
-        .animate-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        .delay-1 {
-            animation-delay: 0.1s;
-        }
-
-        .delay-2 {
-            animation-delay: 0.2s;
-        }
-
-        .delay-3 {
-            animation-delay: 0.3s;
-        }
-
-        .delay-4 {
-            animation-delay: 0.4s;
+            .step-badge {
+                margin-top: 8px;
+            }
         }
     </style>
 </head>
 
 <body>
     <header class="header">
-        <div class="logo">
-            <div class="logo-icon">⚡</div>
-            <span>CitationVault</span>
-        </div>
-        <div class="header-meta">
-            <div>Generated: <strong>{{GENERATED_AT}}</strong></div>
-            <div>Report for <strong>{{DOMAIN}}</strong></div>
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <span>CiteKit</span>
+            </div>
+            <div class="header-meta">
+                <div>Report for <strong>{{DOMAIN}}</strong></div>
+                <div>{{GENERATED_AT}}</div>
+            </div>
         </div>
     </header>
 
     <section class="hero">
         <div class="domain-badge">
-            <span>🌐</span>
-            <strong>{{DOMAIN}}</strong>
+            🌐 <strong>{{DOMAIN}}</strong>
         </div>
 
-        <div class="score-circle">
-            <svg viewBox="0 0 100 100">
-                <circle class="score-circle-bg" cx="50" cy="50" r="42" />
-                <circle class="score-circle-value" cx="50" cy="50" r="42" stroke="url(#scoreGradient)"
-                    stroke-dasharray="264" stroke-dashoffset="{{SCORE_OFFSET}}" />
-                <defs>
-                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style="stop-color:{{SCORE_COLOR_START}}" />
-                        <stop offset="100%" style="stop-color:{{SCORE_COLOR_END}}" />
-                    </linearGradient>
-                </defs>
-            </svg>
-            <div class="score-number">
-                <div class="value">{{SCORE}}</div>
-                <div class="max">/100</div>
+        <div class="score-container">
+            <div class="score-circle">
+                <svg viewBox="0 0 100 100">
+                    <circle class="score-circle-bg" cx="50" cy="50" r="42" />
+                    <circle class="score-circle-value" cx="50" cy="50" r="42" stroke="url(#scoreGradient)"
+                        stroke-dasharray="264" stroke-dashoffset="{{SCORE_OFFSET}}" />
+                    <defs>
+                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:{{SCORE_COLOR_START}}" />
+                            <stop offset="100%" style="stop-color:{{SCORE_COLOR_END}}" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="score-number">
+                    <div class="value">{{SCORE}}</div>
+                    <div class="max">/100</div>
+                </div>
             </div>
+
+            <div class="score-label" style="color: {{SCORE_COLOR_START}}">{{SCORE_LABEL}}</div>
+            <p class="score-description">{{SCORE_DESCRIPTION}}</p>
         </div>
 
-        <div class="score-label" style="color: {{SCORE_COLOR_START}}">{{SCORE_LABEL}}</div>
-        <p class="score-description">{{SCORE_DESCRIPTION}}</p>
-
-        <div class="container">
-            <div class="breakdown animate-in delay-2">
-                <div class="breakdown-card">
-                    <div class="breakdown-card-header">
-                        <span class="breakdown-card-title">Content Quality</span>
-                        <span class="breakdown-card-score">{{CONTENT_SCORE}}/25</span>
-                    </div>
-                    <div class="breakdown-bar">
-                        <div class="breakdown-bar-fill"
-                            style="width: {{CONTENT_PERCENT}}%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);">
-                        </div>
-                    </div>
+        <div class="breakdown">
+            <div class="breakdown-card">
+                <div class="breakdown-header">
+                    <span class="breakdown-title">Content</span>
+                    <span class="breakdown-score">{{CONTENT_SCORE}}/25</span>
                 </div>
-                <div class="breakdown-card">
-                    <div class="breakdown-card-header">
-                        <span class="breakdown-card-title">Metadata</span>
-                        <span class="breakdown-card-score">{{METADATA_SCORE}}/25</span>
-                    </div>
-                    <div class="breakdown-bar">
-                        <div class="breakdown-bar-fill"
-                            style="width: {{METADATA_PERCENT}}%; background: linear-gradient(90deg, #22c55e, #10b981);">
-                        </div>
-                    </div>
+                <div class="breakdown-bar">
+                    <div class="breakdown-bar-fill" style="width: {{CONTENT_PERCENT}}%; background: #3B82F6;"></div>
                 </div>
-                <div class="breakdown-card">
-                    <div class="breakdown-card-header">
-                        <span class="breakdown-card-title">Structure</span>
-                        <span class="breakdown-card-score">{{STRUCTURE_SCORE}}/25</span>
-                    </div>
-                    <div class="breakdown-bar">
-                        <div class="breakdown-bar-fill"
-                            style="width: {{STRUCTURE_PERCENT}}%; background: linear-gradient(90deg, #f97316, #eab308);">
-                        </div>
-                    </div>
+            </div>
+            <div class="breakdown-card">
+                <div class="breakdown-header">
+                    <span class="breakdown-title">Metadata</span>
+                    <span class="breakdown-score">{{METADATA_SCORE}}/25</span>
                 </div>
-                <div class="breakdown-card">
-                    <div class="breakdown-card-header">
-                        <span class="breakdown-card-title">LLM Readiness</span>
-                        <span class="breakdown-card-score">{{LLM_SCORE}}/25</span>
-                    </div>
-                    <div class="breakdown-bar">
-                        <div class="breakdown-bar-fill"
-                            style="width: {{LLM_PERCENT}}%; background: linear-gradient(90deg, #ec4899, #8b5cf6);">
-                        </div>
-                    </div>
+                <div class="breakdown-bar">
+                    <div class="breakdown-bar-fill" style="width: {{METADATA_PERCENT}}%; background: #22C55E;"></div>
+                </div>
+            </div>
+            <div class="breakdown-card">
+                <div class="breakdown-header">
+                    <span class="breakdown-title">Structure</span>
+                    <span class="breakdown-score">{{STRUCTURE_SCORE}}/25</span>
+                </div>
+                <div class="breakdown-bar">
+                    <div class="breakdown-bar-fill" style="width: {{STRUCTURE_PERCENT}}%; background: #F97316;"></div>
+                </div>
+            </div>
+            <div class="breakdown-card">
+                <div class="breakdown-header">
+                    <span class="breakdown-title">AI Ready</span>
+                    <span class="breakdown-score">{{LLM_SCORE}}/25</span>
+                </div>
+                <div class="breakdown-bar">
+                    <div class="breakdown-bar-fill" style="width: {{LLM_PERCENT}}%; background: #8B5CF6;"></div>
                 </div>
             </div>
         </div>
     </section>
 
     <div class="container">
+        <!-- Alert -->
+        <section class="section">
+            <div class="alert-banner">
+                <div class="alert-title">🚀 Action Required</div>
+                <div class="alert-text">Deploy the files below so AI systems like ChatGPT, Claude, and Gemini can see
+                    and cite your website.</div>
+            </div>
+        </section>
+
+        <!-- Deployment Steps -->
+        <section class="section">
+            <h2 class="section-title">Deployment Guide</h2>
+            <p class="section-subtitle">Follow these steps in order</p>
+
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-num">1</div>
+                    <div class="step-info">
+                        <div class="step-title">Deploy robots.txt</div>
+                        <div class="step-desc">Whitelist AI crawlers to access your site</div>
+                    </div>
+                    <span class="step-badge critical">Critical</span>
+                </div>
+                <div class="step-content">
+                    <div class="code-box">https://{{DOMAIN}}/robots.txt</div>
+                    <div class="tip-box">
+                        <strong>💡 Why:</strong> Without this, GPTBot and ClaudeBot may ignore your website entirely.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-num">2</div>
+                    <div class="step-info">
+                        <div class="step-title">Deploy llms.txt</div>
+                        <div class="step-desc">Give AI a summary of your website</div>
+                    </div>
+                    <span class="step-badge critical">Critical</span>
+                </div>
+                <div class="step-content">
+                    <div class="code-box">https://{{DOMAIN}}/llms.txt</div>
+                    <div class="tip-box">
+                        <strong>💡 Why:</strong> This is the "robots.txt for AI" — it tells LLMs who you are.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-num">3</div>
+                    <div class="step-info">
+                        <div class="step-title">Add Schema.org JSON-LD</div>
+                        <div class="step-desc">Paste into your homepage &lt;head&gt;</div>
+                    </div>
+                    <span class="step-badge important">Important</span>
+                </div>
+                <div class="step-content">
+                    <div class="code-box">Open schemas/organization-schema.html
+                        Copy the &lt;script&gt; block
+                        Paste into homepage &lt;head&gt;</div>
+                    <div class="tip-box">
+                        <strong>💡 Why:</strong> Helps Google AND AI understand your business.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-num">4</div>
+                    <div class="step-info">
+                        <div class="step-title">Deploy mcp.json</div>
+                        <div class="step-desc">Help AI agents find the right pages</div>
+                    </div>
+                    <span class="step-badge optional">Optional</span>
+                </div>
+                <div class="step-content">
+                    <div class="code-box">https://{{DOMAIN}}/mcp.json</div>
+                    <div class="tip-box">
+                        <strong>💡 Why:</strong> Routes AI agents to pricing, docs, etc.
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Stats -->
-        <section class="section animate-in delay-3">
-            <h2 class="section-title">
-                <div class="section-title-icon">📊</div>
-                Site Statistics
-            </h2>
+        <section class="section">
+            <h2 class="section-title">Site Analysis</h2>
+            <p class="section-subtitle">What we crawled and processed</p>
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value">{{TOTAL_PAGES}}</div>
@@ -558,7 +812,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">{{TOTAL_WORDS}}</div>
-                    <div class="stat-label">Total Words</div>
+                    <div class="stat-label">Words Indexed</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">{{ISSUES_COUNT}}</div>
@@ -572,129 +826,102 @@
         </section>
 
         <!-- Issues -->
-        <section class="section animate-in delay-4">
-            <h2 class="section-title">
-                <div class="section-title-icon">🔍</div>
-                Audit Findings
-            </h2>
-            <div class="issues-list">
+        <section class="section">
+            <h2 class="section-title">Issues to Fix</h2>
+            <p class="section-subtitle">Address these to improve your score</p>
+
+            <div class="issue-list">
                 {{ISSUES_HTML}}
             </div>
         </section>
 
-        <!-- Package Files -->
+        <!-- Files -->
         <section class="section">
-            <h2 class="section-title">
-                <div class="section-title-icon">📦</div>
-                Your Package
-            </h2>
-            <div class="files-grid">
-                <a href="llm.txt" class="file-card">
-                    <div class="file-icon">📄</div>
+            <h2 class="section-title">Your Files</h2>
+            <p class="section-subtitle">All files included in this package</p>
+
+            <div class="file-list">
+                <a href="llm.txt" class="file-item">
+                    <div class="file-icon">🤖</div>
                     <div class="file-info">
-                        <div class="file-name">llm.txt</div>
-                        <div class="file-desc">Identity document for LLMs</div>
+                        <div class="file-name">llm.txt / llms.txt</div>
+                        <div class="file-desc">AI-readable summary of your website</div>
                     </div>
+                    <span class="file-badge">Deploy</span>
                 </a>
-                <a href="mcp.json" class="file-card">
+                <a href="robots.txt" class="file-item">
+                    <div class="file-icon">🕷️</div>
+                    <div class="file-info">
+                        <div class="file-name">robots.txt</div>
+                        <div class="file-desc">AI crawler permissions</div>
+                    </div>
+                    <span class="file-badge">Deploy</span>
+                </a>
+                <a href="sitemap.xml" class="file-item">
                     <div class="file-icon">🗺️</div>
                     <div class="file-info">
-                        <div class="file-name">mcp.json</div>
-                        <div class="file-desc">Intent-to-URL mappings</div>
+                        <div class="file-name">sitemap.xml</div>
+                        <div class="file-desc">Standard XML sitemap</div>
                     </div>
                 </a>
-                <a href="facts.jsonld" class="file-card">
+                <a href="mcp.json" class="file-item">
+                    <div class="file-icon">🔀</div>
+                    <div class="file-info">
+                        <div class="file-name">mcp.json</div>
+                        <div class="file-desc">AI agent routing</div>
+                    </div>
+                </a>
+                <a href="facts.jsonld" class="file-item">
                     <div class="file-icon">🧠</div>
                     <div class="file-info">
                         <div class="file-name">facts.jsonld</div>
                         <div class="file-desc">Schema.org structured data</div>
                     </div>
                 </a>
-                <a href="sitemap.json" class="file-card">
-                    <div class="file-icon">📍</div>
+                <a href="schemas/organization-schema.html" class="file-item">
+                    <div class="file-icon">🏢</div>
                     <div class="file-info">
-                        <div class="file-name">sitemap.json</div>
-                        <div class="file-desc">Classified page index</div>
+                        <div class="file-name">schemas/*.html</div>
+                        <div class="file-desc">Ready-to-paste JSON-LD</div>
                     </div>
                 </a>
-                <a href="DEPLOY.md" class="file-card">
-                    <div class="file-icon">🚀</div>
-                    <div class="file-info">
-                        <div class="file-name">DEPLOY.md</div>
-                        <div class="file-desc">Deployment instructions</div>
-                    </div>
-                </a>
-                <a href="robots.txt" class="file-card">
-                    <div class="file-icon">🤖</div>
-                    <div class="file-info">
-                        <div class="file-name">robots.txt</div>
-                        <div class="file-desc">AI crawler permissions</div>
-                    </div>
-                </a>
-                <a href="CITATION-ROADMAP.md" class="file-card">
+                <a href="CITATION-ROADMAP.md" class="file-item">
                     <div class="file-icon">🎯</div>
                     <div class="file-info">
                         <div class="file-name">CITATION-ROADMAP.md</div>
-                        <div class="file-desc">30-day action plan</div>
+                        <div class="file-desc">Your 30-day action plan</div>
                     </div>
                 </a>
-                <a href="schemas/organization-schema.html" class="file-card">
-                    <div class="file-icon">🏢</div>
+                <a href="DEPLOYMENT-GUIDE.md" class="file-item">
+                    <div class="file-icon">📘</div>
                     <div class="file-info">
-                        <div class="file-name">organization-schema.html</div>
-                        <div class="file-desc">Ready-to-paste schema</div>
+                        <div class="file-name">DEPLOYMENT-GUIDE.md</div>
+                        <div class="file-desc">Detailed deployment guide</div>
                     </div>
                 </a>
             </div>
         </section>
 
-        <!-- Recommendations -->
-        <section class="section">
-            <h2 class="section-title">
-                <div class="section-title-icon">💡</div>
-                Next Steps
-            </h2>
-            <div class="issues-list">
-                <div class="issue-card">
-                    <div class="issue-icon info">1</div>
-                    <div class="issue-content">
-                        <div class="issue-title">Deploy llm.txt to your website root</div>
-                        <div class="issue-description">Upload llm.txt to https://{{DOMAIN}}/llm.txt so AI models can
-                            understand your brand.</div>
-                    </div>
+        <!-- Verify -->
+        <div class="verify-box">
+            <h3 class="verify-title">✅ How to Verify</h3>
+            <div class="verify-grid">
+                <div class="verify-card">
+                    <h4>Check File Access</h4>
+                    <div class="code-box" style="margin-bottom: 0;">curl https://{{DOMAIN}}/llms.txt</div>
                 </div>
-                <div class="issue-card">
-                    <div class="issue-icon info">2</div>
-                    <div class="issue-content">
-                        <div class="issue-title">Add mcp.json for agent routing</div>
-                        <div class="issue-description">Deploy mcp.json to help AI agents navigate directly to relevant
-                            pages.</div>
-                    </div>
-                </div>
-                <div class="issue-card">
-                    <div class="issue-icon info">3</div>
-                    <div class="issue-content">
-                        <div class="issue-title">Fix critical issues first</div>
-                        <div class="issue-description">Address any critical or warning issues above to improve your GEO
-                            score.</div>
-                    </div>
-                </div>
-                <div class="issue-card">
-                    <div class="issue-icon info">4</div>
-                    <div class="issue-content">
-                        <div class="issue-title">Re-run after major updates</div>
-                        <div class="issue-description">Regenerate your package after significant content changes to keep
-                            AI knowledge current.</div>
-                    </div>
+                <div class="verify-card">
+                    <h4>Test with AI</h4>
+                    <p>Ask ChatGPT or Claude: <strong>"Tell me about {{DOMAIN}}"</strong></p>
                 </div>
             </div>
-        </section>
+        </div>
     </div>
 
     <footer class="footer">
-        <p>Generated by <a href="https://citationvault.com" target="_blank">CitationVault</a> — Get Cited by AI.
-            Finally.</p>
-        <p style="margin-top: 0.5rem;">Report generated on {{GENERATED_AT}}</p>
+        <div class="footer-logo">CiteKit</div>
+        <p>Generated by <a href="https://wantaiseo.com">CiteKit</a> — Get Cited by AI</p>
+        <p style="margin-top: 8px; color: #999;">{{GENERATED_AT}}</p>
     </footer>
 </body>
 

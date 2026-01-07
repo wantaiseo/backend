@@ -447,3 +447,186 @@ async def get_activity_log(
     except Exception as e:
         logger.error(f"Failed to get activity log: {e}")
         return {"logs": [], "error": str(e)}
+
+
+# ============================================
+# TRIAL CODES MANAGEMENT
+# ============================================
+
+class GenerateTrialCodesRequest(BaseModel):
+    count: int = 1
+    prefix: str = "CITE"
+    expires_in_days: Optional[int] = 30
+    note: Optional[str] = None
+    max_uses: int = 1  # For multi-use codes
+
+
+@router.post("/trial-codes/generate")
+async def generate_trial_codes(
+    request: GenerateTrialCodesRequest,
+    admin: dict = Depends(require_admin)
+):
+    """Generate new trial codes for promotional purposes"""
+    from trial_codes import generate_codes_batch, TrialCodeType
+    
+    db = Database()
+    
+    try:
+        # Determine code type based on max_uses
+        code_type = TrialCodeType.SINGLE_USE if request.max_uses == 1 else TrialCodeType.MULTI_USE
+        
+        # Generate codes
+        codes = generate_codes_batch(
+            count=min(request.count, 100),  # Cap at 100 per request
+            code_type=code_type,
+            max_uses=request.max_uses,
+            expires_in_days=request.expires_in_days,
+            prefix=request.prefix,
+            note=request.note,
+            created_by=admin.get("email")
+        )
+        
+        # Save to database
+        if db.client:
+            for code in codes:
+                db.client.table("trial_codes").insert(code.model_dump()).execute()
+        
+        # Log admin action
+        if db.client:
+            try:
+                db.client.table("admin_activity_log").insert({
+                    "admin_user_id": admin.get("id"),
+                    "action": "generate_trial_codes",
+                    "target_type": "trial_codes",
+                    "details": f"Generated {len(codes)} codes with prefix {request.prefix}"
+                }).execute()
+            except:
+                pass
+        
+        return {
+            "success": True,
+            "codes": [c.code for c in codes],
+            "count": len(codes),
+            "expires_at": codes[0].expires_at if codes else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to generate trial codes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/trial-codes")
+async def get_all_trial_codes(
+    include_inactive: bool = False,
+    admin: dict = Depends(require_admin)
+):
+    """Get all trial codes with usage stats"""
+    db = Database()
+    
+    try:
+        if db.client:
+            query = db.client.table("trial_codes").select("*").order("created_at", desc=True)
+            if not include_inactive:
+                query = query.eq("is_active", True)
+            result = query.execute()
+            
+            # Get redemption counts
+            redemptions_result = db.client.table("trial_redemptions").select("code, user_email, redeemed_at").execute()
+            redemptions_by_code = {}
+            if redemptions_result.data:
+                for r in redemptions_result.data:
+                    code = r.get("code")
+                    if code not in redemptions_by_code:
+                        redemptions_by_code[code] = []
+                    redemptions_by_code[code].append({
+                        "email": r.get("user_email"),
+                        "redeemed_at": r.get("redeemed_at")
+                    })
+            
+            codes = []
+            if result.data:
+                for c in result.data:
+                    code = c.get("code")
+                    codes.append({
+                        **c,
+                        "redemptions": redemptions_by_code.get(code, [])
+                    })
+            
+            return {"codes": codes, "total": len(codes)}
+        
+        return {"codes": [], "total": 0}
+        
+    except Exception as e:
+        logger.error(f"Failed to get trial codes: {e}")
+        return {"codes": [], "total": 0, "error": str(e)}
+
+
+@router.post("/trial-codes/{code}/deactivate")
+async def deactivate_trial_code(
+    code: str,
+    admin: dict = Depends(require_admin)
+):
+    """Deactivate a trial code"""
+    db = Database()
+    
+    try:
+        if db.client:
+            db.client.table("trial_codes").update({
+                "is_active": False
+            }).eq("code", code.upper()).execute()
+            
+            # Log admin action
+            try:
+                db.client.table("admin_activity_log").insert({
+                    "admin_user_id": admin.get("id"),
+                    "action": "deactivate_trial_code",
+                    "target_type": "trial_code",
+                    "target_id": code
+                }).execute()
+            except:
+                pass
+            
+            return {"success": True, "message": f"Code {code} deactivated"}
+        
+        return {"success": False, "message": "Database not available"}
+        
+    except Exception as e:
+        logger.error(f"Failed to deactivate trial code: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/trial-codes/stats")
+async def get_trial_code_stats(
+    admin: dict = Depends(require_admin)
+):
+    """Get trial code usage statistics"""
+    db = Database()
+    
+    try:
+        if db.client:
+            # Get all codes
+            codes_result = db.client.table("trial_codes").select("*").execute()
+            codes = codes_result.data or []
+            
+            # Get all redemptions
+            redemptions_result = db.client.table("trial_redemptions").select("*").execute()
+            redemptions = redemptions_result.data or []
+            
+            active_codes = len([c for c in codes if c.get("is_active")])
+            total_codes = len(codes)
+            total_redemptions = len(redemptions)
+            
+            return {
+                "total_codes": total_codes,
+                "active_codes": active_codes,
+                "inactive_codes": total_codes - active_codes,
+                "total_redemptions": total_redemptions,
+                "unique_users": len(set(r.get("user_id") for r in redemptions))
+            }
+        
+        return {}
+        
+    except Exception as e:
+        logger.error(f"Failed to get trial code stats: {e}")
+        return {"error": str(e)}
+

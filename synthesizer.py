@@ -458,7 +458,7 @@ Generate this exact JSON structure (no markdown code blocks, just raw JSON):
             endpoints=endpoints
         )
 
-    def generate_facts_jsonld(self, pages: list[PageData]) -> dict:
+    def generate_facts_jsonld(self, pages: list[PageData]) -> tuple[dict, list]:
         """
         Generate enhanced facts.jsonld (Schema.org Knowledge Graph)
         
@@ -510,18 +510,18 @@ Generate this exact JSON structure (no markdown code blocks, just raw JSON):
             print(f"  - Facts Extracted: {result['facts_count']}")
             print(f"  - Stats: {result['facts_by_type']}")
             
-            return result["facts_jsonld"]
+            return result["facts_jsonld"], result.get("extracted_facts", [])
             
         except ImportError as e:
             print(f"[Synthesizer] facts_generator not available: {e}. Path: {os.getcwd()}")
             import traceback
             traceback.print_exc()
-            return self._generate_facts_jsonld_fallback(pages, site, social_links)
+            return self._generate_facts_jsonld_fallback(pages, site, social_links), []
         except Exception as e:
             print(f"[Synthesizer] facts_generator fatal error: {e}")
             import traceback
             traceback.print_exc()
-            return self._generate_facts_jsonld_fallback(pages, site, social_links)
+            return self._generate_facts_jsonld_fallback(pages, site, social_links), []
     
     def _generate_facts_jsonld_fallback(self, pages: list[PageData], site: str, social_links: list) -> dict:
         """Fallback facts.jsonld generation (original implementation)."""

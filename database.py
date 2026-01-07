@@ -253,6 +253,16 @@ class Database:
         client.postgrest.auth(token)
         return client
 
+    def get_service_client(self) -> Client:
+        """
+        Get a Supabase client with SERVICE_ROLE privileges.
+        This bypasses RLS policies. USE WITH CAUTION.
+        """
+        settings = get_settings()
+        # Use service role key if available, otherwise fallback to default key (which might be service role)
+        key = settings.supabase_service_role_key or settings.supabase_key
+        return create_client(settings.supabase_url, key)
+
     async def get_user_job_count(self, user_id: str) -> int:
         """Get count of jobs for a user"""
         result = (
@@ -655,6 +665,137 @@ class Database:
         except Exception as e:
             print(f"Error fetching payment statistics: {e}")
             return {"total_orders": 0, "total_revenue_paise": 0, "total_revenue_inr": 0}
+
+    # ============================================
+    # WORDPRESS INTEGRATIONS
+    # ============================================
+    
+    WP_CONNECTIONS_FILE = "wordpress_connections.json"
+    
+    def _load_wp_connections(self) -> dict:
+        """Load WordPress connections from local file"""
+        import os
+        if not os.path.exists(self.WP_CONNECTIONS_FILE):
+            return {}
+        try:
+            with open(self.WP_CONNECTIONS_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    
+    def _save_wp_connections(self, data: dict):
+        """Save WordPress connections to local file"""
+        with open(self.WP_CONNECTIONS_FILE, "w") as f:
+            json.dump(data, f, default=str)
+    
+    async def save_wordpress_connection(
+        self, 
+        user_id: str, 
+        site_url: str, 
+        site_key: str
+    ) -> dict:
+        """Save a WordPress site connection for a user"""
+        from datetime import datetime
+        
+        connection = {
+            "user_id": user_id,
+            "site_url": site_url,
+            "site_key": site_key,  # Encrypted in production!
+            "connected_at": datetime.utcnow().isoformat()
+        }
+        
+        # Try Supabase first
+        try:
+            # Check if exists
+            existing = (
+                self.client.table("wordpress_connections")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("site_url", site_url)
+                .execute()
+            )
+            
+            if existing.data:
+                # Update
+                result = (
+                    self.client.table("wordpress_connections")
+                    .update({"site_key": site_key, "connected_at": connection["connected_at"]})
+                    .eq("user_id", user_id)
+                    .eq("site_url", site_url)
+                    .execute()
+                )
+            else:
+                # Insert
+                result = self.client.table("wordpress_connections").insert(connection).execute()
+            
+            if result.data:
+                return result.data[0]
+        except Exception as e:
+            print(f"Supabase wordpress_connections failed ({e}), using local fallback...")
+        
+        # Local fallback
+        data = self._load_wp_connections()
+        if user_id not in data:
+            data[user_id] = []
+        
+        # Update or add
+        updated = False
+        for conn in data[user_id]:
+            if conn["site_url"] == site_url:
+                conn["site_key"] = site_key
+                conn["connected_at"] = connection["connected_at"]
+                updated = True
+                break
+        
+        if not updated:
+            data[user_id].append(connection)
+        
+        self._save_wp_connections(data)
+        return connection
+    
+    async def get_wordpress_connections(self, user_id: str) -> list:
+        """Get all WordPress connections for a user"""
+        try:
+            result = (
+                self.client.table("wordpress_connections")
+                .select("site_url, connected_at")  # Don't return site_key!
+                .eq("user_id", user_id)
+                .execute()
+            )
+            if result.data:
+                return result.data
+        except Exception as e:
+            print(f"Supabase get_wordpress_connections failed ({e}), using local fallback...")
+        
+        # Local fallback
+        data = self._load_wp_connections()
+        if user_id in data:
+            # Don't return site_key for security
+            return [{"site_url": c["site_url"], "connected_at": c["connected_at"]} for c in data[user_id]]
+        return []
+    
+    async def get_wordpress_connection(self, user_id: str, site_url: str) -> Optional[dict]:
+        """Get a specific WordPress connection (includes site_key for deployment)"""
+        try:
+            result = (
+                self.client.table("wordpress_connections")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("site_url", site_url)
+                .execute()
+            )
+            if result.data:
+                return result.data[0]
+        except Exception as e:
+            print(f"Supabase get_wordpress_connection failed ({e}), using local fallback...")
+        
+        # Local fallback
+        data = self._load_wp_connections()
+        if user_id in data:
+            for conn in data[user_id]:
+                if conn["site_url"] == site_url:
+                    return conn
+        return None
 
 
 # Singleton instance

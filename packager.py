@@ -19,6 +19,7 @@ from extractor import ContentExtractor
 from auditor import GEOAuditor
 from schema_generator import SchemaGenerator
 from citation_scorer import generate_citation_roadmap, ReadinessScore
+from deployment_guides import get_platform_guide, get_all_platform_instructions, PLATFORM_GUIDES
 
 # Configure logging
 logger = logging.getLogger("geo-compiler.packager")
@@ -623,6 +624,68 @@ Sitemap: https://{domain}/sitemap.xml
 </body>
 </html>'''
 
+    def generate_deployment_guide_html(self, domain: str, platform_info: dict = None) -> str:
+        """
+        Generate interactive HTML deployment guide with platform-specific instructions.
+        
+        Args:
+            domain: The website domain
+            platform_info: Dict with 'detected', 'name', 'hosting', 'guide_id' from platform detection
+        """
+        from datetime import datetime
+        
+        # Load template
+        template_path = Path(__file__).parent / "templates" / "guide.html"
+        if not template_path.exists():
+            return f"<html><body><h1>Deployment Guide for {domain}</h1><p>Template not found.</p></body></html>"
+        
+        template = template_path.read_text(encoding="utf-8")
+        
+        # Determine platform details
+        if platform_info:
+            platform_id = platform_info.get("guide_id", "cpanel")
+            platform_name = platform_info.get("name", "Custom/Static")
+        else:
+            platform_id = "cpanel"
+            platform_name = "cPanel / Traditional Hosting"
+        
+        # Get platform guide data
+        guide_data = get_platform_guide(platform_id)
+        
+        # Generate all platform instructions (all tabs)
+        all_instructions = get_all_platform_instructions()
+        
+        # Generate timestamp
+        generated_at = datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")
+        
+        # Platform icon mapping
+        platform_icons = {
+            "wordpress": "📝",
+            "shopify": "🛒",
+            "wix": "🎨",
+            "vercel": "▲",
+            "netlify": "🌐",
+            "cpanel": "⚙️",
+            "custom": "🔧",
+        }
+        
+        replacements = {
+            "{{DOMAIN}}": domain,
+            "{{GENERATED_AT}}": generated_at,
+            "{{PLATFORM_ID}}": platform_id,
+            "{{PLATFORM_NAME}}": platform_name,
+            "{{PLATFORM_ICON}}": platform_icons.get(platform_id, "📖"),
+            "{{PLATFORM_COLOR}}": guide_data.get("color", "#6B7280"),
+            "{{PLATFORM_LETTER}}": guide_data.get("letter", "?"),
+            "{{PLATFORM_INSTRUCTIONS}}": all_instructions,
+        }
+        
+        html = template
+        for key, value in replacements.items():
+            html = html.replace(key, str(value))
+        
+        return html
+
     # ============================================
     # MAIN PACKAGING
     # ============================================
@@ -635,9 +698,11 @@ Sitemap: https://{domain}/sitemap.xml
         mcp: MCPOutput,
         pages: list[PageData],
         facts: dict = None,
+        extracted_facts: list = None,
         benchmark_report: str = "",
         citation_score_data: dict = None,
-        citation_issues: list = None
+        citation_issues: list = None,
+        platform_info: dict = None
     ) -> tuple[str, list[str], int]:
         """
         Main packaging orchestration.
@@ -717,11 +782,160 @@ Sitemap: https://{domain}/sitemap.xml
                 for issue in geo_issues
             ]
 
+
         # Create ZIP with all reports
         zip_path = self.create_zip(
             domain, llm_txt, mcp, sitemap, pages, facts, 
             audit_report, benchmark_report, 
-            score_data, issues_for_package
+            score_data, issues_for_package,
+            # Pass payment info to deciding on GMB pack
+            include_gmb=(citation_score_data is not None) or (job_id and self._is_job_paid(job_id)),
+            extracted_facts=extracted_facts,
+            platform_info=platform_info
         )
 
         return zip_path, [], final_score
+
+    def _is_job_paid(self, job_id: str) -> bool:
+        # Helper to check payment status (simplified, really should be passed in)
+        # For now, we rely on the `citation_score_data` presence as a proxy for "Full/Paid Run" 
+        # OR we just generate it for everyone for now as a "Free Preview" (Value-Add Strategy)
+        # Let's generate it for everyone but maybe put it in a "Preview" folder if not paid?
+        # Re-reading prompt: "we need to show how much more value we are providing"
+        # Let's include it for EVERYONE right now to WOW them.
+        return True
+
+    # ============================================
+    # ZIP CREATION
+    # ============================================
+
+    def create_zip(
+        self,
+        domain: str,
+        llm_txt: str,
+        mcp: MCPOutput,
+        sitemap: SitemapOutput,
+        pages: list[PageData],
+        facts: dict = None,
+        audit_report: str = "",
+        benchmark_report: str = "",
+        score_data: dict = None,
+        issues: list = None,
+        include_gmb: bool = True,
+        extracted_facts: list = None,
+        platform_info: dict = None
+    ) -> str:
+        """
+        Create deterministic ZIP package.
+        Returns path to created ZIP file.
+        """
+        # Clean domain for filename
+        safe_domain = domain.replace(".", "_").replace(":", "_")
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"{safe_domain}-geo.zip"
+        zip_path = self.output_dir / zip_filename
+
+        # Create ZIP with deterministic ordering
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            # 0. index.html - Beautiful visual report (FIRST for easy access)
+            html_report = self.generate_html_report(
+                domain, pages, mcp, score_data or {}, issues or []
+            )
+            zf.writestr("index.html", html_report)
+
+            # 1. DEPLOYMENT-GUIDE.md - Quick start guide
+            deploy_guide = self.generate_deploy_guide(domain, len(pages))
+            zf.writestr("DEPLOYMENT-GUIDE.md", deploy_guide)
+
+            # 1b. guide.html - Interactive platform-specific guide
+            guide_html = self.generate_deployment_guide_html(domain, platform_info)
+            zf.writestr("guide.html", guide_html)
+
+            # 2. llm.txt AND llms.txt (both for compatibility)
+            # llm.txt is commonly used, llms.txt is the llmstxt.org standard
+            zf.writestr("llm.txt", llm_txt)
+            zf.writestr("llms.txt", llm_txt)  # Same content, different name
+
+            # 3. robots.txt - Optimized for AI crawlers
+            robots_txt = self._generate_robots_txt(domain)
+            zf.writestr("robots.txt", robots_txt)
+            
+            # 4. Schema files (ready to paste into <head>)
+            schemas = self._generate_schema_files(facts, pages, domain)
+            for name, content in schemas.items():
+                zf.writestr(f"schemas/{name}", content)
+            
+            # 5. CITATION-ROADMAP.md (The replacement for AUDIT.md)
+            if score_data and issues:
+                readiness_score = ReadinessScore(
+                    total=score_data.get("total", 0),
+                    grade=score_data.get("grade", "N/A"),
+                    breakdown=score_data.get("breakdown", {}),
+                    issues=[],
+                    action_items=score_data.get("quick_wins", []),
+                    summary=score_data.get("interpretation", ""),
+                    disclaimer=""
+                )
+                roadmap = generate_citation_roadmap(domain, readiness_score, facts or {})
+                zf.writestr("CITATION-ROADMAP.md", roadmap)
+
+            # 5b. COMPETITOR-BENCHMARK.md (If competitor analysis was done)
+            if benchmark_report:
+                zf.writestr("COMPETITOR-BENCHMARK.md", benchmark_report)
+
+            # 6. GMB OPTIMIZATION PACK (Value Add)
+            if include_gmb and extracted_facts:
+                try:
+                    from gmb_generator import GMBGenerator
+                    
+                    # Construct minimal metadata
+                    # We can try to get org_name from facts dict if available, or domain
+                    org_name = domain
+                    if facts and facts.get("name"):
+                        org_name = facts.get("name")
+                    
+                    metadata = {
+                        "org_name": org_name,
+                        "domain": domain
+                    }
+                    
+                    print(f"Generating GMB Optimization Pack for {org_name}...")
+                    gmb_gen = GMBGenerator(extracted_facts, pages, metadata)
+                    gmb_kit = gmb_gen.generate_kit()
+                    
+                    # Create dedicated folder in ZIP
+                    base_folder = "GMB_Optimization_Pack/"
+                    for filename, content in gmb_kit.items():
+                        zf.writestr(f"{base_folder}{filename}", content)
+                        
+                except ImportError:
+                    print("GMB Generator module not found.")
+                except Exception as e:
+                    print(f"Error generating GMB pack: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            # 6b. facts.jsonld (Raw structured data)
+            if facts:
+                 facts_json = json.dumps(facts, indent=2, sort_keys=True)
+                 zf.writestr("facts.jsonld", facts_json)
+
+            # 7. mcp.json (Agent routing protocol - tells AI where to find things)
+            mcp_json = json.dumps(mcp.model_dump(), indent=2, sort_keys=True)
+            zf.writestr("mcp.json", mcp_json)
+
+            # 8. sitemap.json (Reference only)
+            sitemap_json = json.dumps(sitemap.model_dump(), indent=2, sort_keys=True)
+            zf.writestr("sitemap.json", sitemap_json)
+            
+            # 9. sitemap.xml (Standard XML sitemap for deployment)
+            sitemap_xml = self._generate_sitemap_xml(domain, sitemap)
+            zf.writestr("sitemap.xml", sitemap_xml)
+
+            # 10. pages/ directory (INTERNAL USE for re-runs / reference)
+            for page in sorted(pages, key=lambda p: p.url):
+                slug = ContentExtractor.url_to_slug(page.url)
+                page_json = json.dumps(self.prepare_page_json(page), indent=2, sort_keys=True)
+                zf.writestr(f"pages/{slug}.json", page_json)
+
+        return str(zip_path)

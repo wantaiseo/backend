@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # Supabase
     supabase_url: str = ""
     supabase_key: str = ""
+    supabase_service_role_key: Optional[str] = None  # Admin key for bypassing RLS
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"

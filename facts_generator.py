@@ -1180,6 +1180,7 @@ Return ONLY the JSON array, no other text."""
         
         return {
             "facts_jsonld": schema,
+            "extracted_facts": facts,  # Expose raw facts for GMB generator
             "validation": asdict(validation),
             "quality_score": validation.quality_score,
             "quality_grade": quality_grade,

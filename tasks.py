@@ -26,6 +26,7 @@ from packager import Packager
 from benchmark import run_benchmark
 from models import CompileJob, JobStatus, PageData
 from citation_scorer import CitationScorer
+from platform_detector import detect_platform, get_deployment_guide_id
 
 
 def run_async(coro):
@@ -139,6 +140,33 @@ def compile_website_task(self, job_id: str, url: str, crawl_depth: str = "auto",
             run_async(db.update_job(job_id, progress=progress))
 
         # ============================================
+        # PHASE 3.5: PLATFORM DETECTION
+        # ============================================
+        platform_info = None
+        detected_platform = "custom"
+        detected_hosting = None
+        
+        # Use homepage or first page for detection
+        homepage = next((p for p in pages if p.classification.get('page_type') == 'homepage'), None)
+        detection_page = homepage or (pages[0] if pages else None)
+        
+        if detection_page and detection_page.content:
+            try:
+                platform_info = detect_platform(
+                    html=detection_page.content,
+                    headers={},  # Headers not stored in PageData, but can be added
+                    url=detection_page.url
+                )
+                detected_platform = platform_info.platform
+                detected_hosting = platform_info.hosting
+                
+                print(f"[Task] Platform detected: {platform_info.platform_name} (confidence: {platform_info.confidence:.0%})")
+                if platform_info.hosting:
+                    print(f"[Task] Hosting detected: {platform_info.hosting}")
+            except Exception as e:
+                print(f"[Task] Platform detection failed (non-critical): {e}")
+
+        # ============================================
         # PHASE 4: SYNTHESIS
         # ============================================
         run_async(check_cancellation(job_id))
@@ -155,7 +183,7 @@ def compile_website_task(self, job_id: str, url: str, crawl_depth: str = "auto",
         run_async(db.update_job(job_id, progress=80))
 
         # Generate enhanced facts.jsonld with sameAs + pricing
-        facts = synthesizer.generate_facts_jsonld(pages)
+        facts, extracted_facts = synthesizer.generate_facts_jsonld(pages)
         run_async(db.update_job(job_id, progress=85))
 
         # ============================================
@@ -241,6 +269,13 @@ def compile_website_task(self, job_id: str, url: str, crawl_depth: str = "auto",
            "score": citation_score_data,
            "issues": citation_issues,
            "benchmark": benchmark_data,  # Structured data for frontend
+           "platform": {
+               "detected": detected_platform,
+               "name": platform_info.platform_name if platform_info else "Custom/Static",
+               "hosting": detected_hosting,
+               "confidence": platform_info.confidence if platform_info else 0.5,
+               "guide_id": get_deployment_guide_id(platform_info) if platform_info else "cpanel"
+           },
            "generated_at": datetime.utcnow().isoformat()
         }
         
@@ -251,9 +286,11 @@ def compile_website_task(self, job_id: str, url: str, crawl_depth: str = "auto",
         zip_path, errors, geo_score = packager.generate_package(
             job_id, domain, llm_txt, mcp, pages,
             facts=facts,
+            extracted_facts=extracted_facts,
             benchmark_report=benchmark_report,
             citation_score_data=citation_score_data,
-            citation_issues=citation_issues
+            citation_issues=citation_issues,
+            platform_info=audit_data.get("platform")
         )
 
         if errors:

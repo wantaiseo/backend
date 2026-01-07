@@ -444,3 +444,92 @@ async def get_payment_status(
         currency=order.get("currency"),
         paid_at=order.get("paid_at")
     )
+
+
+# ============================================
+# TRIAL CODE ENDPOINTS
+# ============================================
+
+class RedeemTrialCodeRequest(BaseModel):
+    code: str
+    job_id: str
+
+
+class RedeemTrialCodeResponse(BaseModel):
+    success: bool
+    message: str
+
+
+@router.post("/redeem-trial-code", response_model=RedeemTrialCodeResponse)
+async def redeem_trial_code(
+    request: RedeemTrialCodeRequest,
+    user: dict = Depends(get_current_user)
+):
+    """
+    Redeem a trial code to unlock a job's download.
+    
+    Trial codes are distributed for:
+    - Early adopters / testimonials
+    - Promotional campaigns
+    - Influencer partnerships
+    """
+    from trial_codes import redeem_trial_code as redeem_code
+    
+    db = get_database()
+    
+    # 1. Verify job exists and belongs to user
+    job = await db.get_job(request.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.user_id != user["id"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # 2. Check if already paid
+    if job.payment_id:
+        return RedeemTrialCodeResponse(
+            success=True,
+            message="This audit is already unlocked!"
+        )
+    
+    # 3. Attempt to redeem the code
+    success, message = await redeem_code(
+        db=db,
+        code=request.code,
+        user_id=user["id"],
+        job_id=request.job_id,
+        user_email=user.get("email")
+    )
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    return RedeemTrialCodeResponse(
+        success=True,
+        message=message
+    )
+
+
+@router.get("/check-trial-code/{code}")
+async def check_trial_code(code: str):
+    """
+    Check if a trial code is valid (without redeeming it).
+    Public endpoint so users can verify before signing up.
+    """
+    from trial_codes import get_trial_code, is_code_valid
+    
+    db = get_database()
+    
+    trial_code = await get_trial_code(db, code)
+    
+    if not trial_code:
+        return {"valid": False, "message": "Invalid code"}
+    
+    is_valid, reason = is_code_valid(trial_code)
+    
+    return {
+        "valid": is_valid,
+        "message": reason if not is_valid else "Code is valid!",
+        "uses_remaining": max(0, trial_code.max_uses - trial_code.current_uses) if trial_code.code_type != "unlimited" else "unlimited"
+    }
+
