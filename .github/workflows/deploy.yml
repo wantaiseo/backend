@@ -29,9 +29,10 @@ jobs:
             # Navigate to backend directory
             cd /app
             
-            # Pull latest code
+            # Pull latest code (Force clean state)
             echo "⬇️ Pulling latest code..."
-            git pull origin main
+            git fetch --all
+            git reset --hard origin/main
             
             # Stop any containers from default compose (cleanup)
             echo "🛑 Stopping old containers..."
