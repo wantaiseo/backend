@@ -258,8 +258,8 @@ PLATFORM_GUIDES = {
                         </div>
                         <div class="step-num">2</div>
                         <div class="step-info">
-                            <div class="step-title">Create llms.txt page</div>
-                            <div class="step-desc">Shopify doesn't allow root file uploads</div>
+                            <div class="step-title">Upload llms.txt via Files + URL Redirect</div>
+                            <div class="step-desc">The proper way to serve llms.txt on Shopify</div>
                         </div>
                         <span class="step-badge critical">Critical</span>
                     </div>
@@ -267,27 +267,35 @@ PLATFORM_GUIDES = {
                         <ol class="instructions">
                             <li>
                                 <div class="instruction-content">
-                                    <p>Go to <strong>Online Store → Pages</strong></p>
+                                    <p>Go to <strong>Content → Files</strong> in your Shopify admin</p>
                                 </div>
                             </li>
                             <li>
                                 <div class="instruction-content">
-                                    <p>Create a new page with handle: <code>llms-txt</code></p>
+                                    <p>Click <strong>Upload files</strong> and select <span class="file-path">llms.txt</span></p>
                                 </div>
                             </li>
                             <li>
                                 <div class="instruction-content">
-                                    <p>Paste the contents of llms.txt into the page body (use HTML mode)</p>
+                                    <p>After upload, click on the file and <strong>copy the CDN URL</strong></p>
+                                    <div class="code-box">https://cdn.shopify.com/s/files/.../llms.txt</div>
                                 </div>
                             </li>
                             <li>
                                 <div class="instruction-content">
-                                    <p>Use a redirect app to redirect <code>/llms.txt</code> → <code>/pages/llms-txt</code></p>
+                                    <p>Go to <strong>Online Store → Navigation → URL Redirects</strong></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Click <strong>Create URL redirect</strong></p>
+                                    <p>• Redirect from: <code>/llms.txt</code></p>
+                                    <p>• Redirect to: <em>(paste your CDN URL)</em></p>
                                 </div>
                             </li>
                         </ol>
                         <div class="tip-box">
-                            <strong>💡 Alternative:</strong> Use Shopify's metafields or a custom app to serve llms.txt at the root URL.
+                            <strong>💡 How it works:</strong> Now yourstore.com/llms.txt will redirect to your file on Shopify's CDN!
                         </div>
                     </div>
                 </div>
@@ -761,6 +769,242 @@ https://your-domain.com/mcp.json</div>
         """
     },
     
+    "squarespace": {
+        "name": "Squarespace",
+        "icon": "◼",
+        "color": "#000000",
+        "letter": "SQ",
+        "steps": """
+            <!-- Squarespace Instructions -->
+            <div class="platform-content" data-platform-content="squarespace">
+                <div class="step-card" data-step="sq-1">
+                    <div class="step-header">
+                        <div class="step-checkbox">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="step-num">1</div>
+                        <div class="step-info">
+                            <div class="step-title">Add Schema via Code Injection (Sitewide)</div>
+                            <div class="step-desc">Add structured data to all pages</div>
+                        </div>
+                        <span class="step-badge critical">Critical</span>
+                    </div>
+                    <div class="step-content">
+                        <ol class="instructions">
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Go to <strong>Settings → Website Tools → Code Injection</strong></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>In the <strong>Header</strong> field, paste the Organization Schema from <span class="file-path">schemas/organization-schema.html</span></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Click <strong>Save</strong></p>
+                                </div>
+                            </li>
+                        </ol>
+                        <div class="tip-box">
+                            <strong>💡 Tip:</strong> This adds Schema.org structured data to ALL pages automatically.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card" data-step="sq-2">
+                    <div class="step-header">
+                        <div class="step-checkbox">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="step-num">2</div>
+                        <div class="step-info">
+                            <div class="step-title">Create /llms Content Page</div>
+                            <div class="step-desc">Squarespace doesn't allow root file uploads</div>
+                        </div>
+                        <span class="step-badge important">Important</span>
+                    </div>
+                    <div class="step-content">
+                        <ol class="instructions">
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Go to <strong>Pages → + → Blank Page</strong></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Name it "llms" (URL becomes /llms)</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Add a <strong>Code Block</strong> and paste the content from <span class="file-path">llms.txt</span></p>
+                                </div>
+                            </li>
+                        </ol>
+                        <div class="warning-box">
+                            <strong>⚠️ Limitation:</strong> Squarespace doesn't support serving files at root URLs like /llms.txt. The /llms page is the best workaround.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card" data-step="sq-3">
+                    <div class="step-header">
+                        <div class="step-checkbox">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="step-num">3</div>
+                        <div class="step-info">
+                            <div class="step-title">Verify Installation</div>
+                            <div class="step-desc">Check your Schema is working</div>
+                        </div>
+                        <span class="step-badge optional">Optional</span>
+                    </div>
+                    <div class="step-content">
+                        <ol class="instructions">
+                            <li>
+                                <div class="instruction-content">
+                                    <p>View your page source and search for "application/ld+json"</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Use <a href="https://validator.schema.org/" target="_blank">Google Rich Results Test</a> on your homepage</p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        """
+    },
+
+    "webflow": {
+        "name": "Webflow",
+        "icon": "W",
+        "color": "#4353FF",
+        "letter": "WF",
+        "steps": """
+            <!-- Webflow Instructions -->
+            <div class="platform-content" data-platform-content="webflow">
+                <div class="step-card" data-step="wf-1">
+                    <div class="step-header">
+                        <div class="step-checkbox">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="step-num">1</div>
+                        <div class="step-info">
+                            <div class="step-title">Upload llms.txt (Native Support!)</div>
+                            <div class="step-desc">Webflow has built-in llms.txt support</div>
+                        </div>
+                        <span class="step-badge critical">Critical</span>
+                    </div>
+                    <div class="step-content">
+                        <ol class="instructions">
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Go to <strong>Site Settings → SEO</strong> tab</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Scroll to <strong>LLMs.txt</strong> section</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Click <strong>Upload file</strong> and select <span class="file-path">llms.txt</span> from this package</p>
+                                </div>
+                            </li>
+                        </ol>
+                        <div class="tip-box">
+                            <strong>💡 Great News:</strong> Webflow natively supports llms.txt - it will automatically be served at yoursite.com/llms.txt!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card" data-step="wf-2">
+                    <div class="step-header">
+                        <div class="step-checkbox">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="step-num">2</div>
+                        <div class="step-info">
+                            <div class="step-title">Customize robots.txt</div>
+                            <div class="step-desc">Add AI crawler permissions</div>
+                        </div>
+                        <span class="step-badge important">Important</span>
+                    </div>
+                    <div class="step-content">
+                        <ol class="instructions">
+                            <li>
+                                <div class="instruction-content">
+                                    <p>In Site Settings → <strong>SEO → Indexing</strong></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Find the custom robots.txt field</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Add the AI crawler rules from our <span class="file-path">robots.txt</span> file</p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="step-card" data-step="wf-3">
+                    <div class="step-header">
+                        <div class="step-checkbox">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="step-num">3</div>
+                        <div class="step-info">
+                            <div class="step-title">Add Schema via Custom Code</div>
+                            <div class="step-desc">Structured data for AI understanding</div>
+                        </div>
+                        <span class="step-badge important">Important</span>
+                    </div>
+                    <div class="step-content">
+                        <ol class="instructions">
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Go to <strong>Project Settings → Custom Code</strong></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>In <strong>Head Code</strong>, paste the schema from <span class="file-path">schemas/organization-schema.html</span></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Click <strong>Save Changes</strong> then <strong>Publish</strong></p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        """
+    },
+
     "custom": {
         "name": "Custom / Static Site",
         "icon": "?",
@@ -797,7 +1041,12 @@ https://your-domain.com/mcp.json</div>
                             </li>
                             <li>
                                 <div class="instruction-content">
-                                    <p>Upload all files from this package</p>
+                                    <p>Upload these files: <span class="file-path">llms.txt</span>, <span class="file-path">robots.txt</span>, <span class="file-path">sitemap.xml</span>, <span class="file-path">mcp.json</span></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="instruction-content">
+                                    <p>Add Schema from <span class="file-path">schemas/</span> folder to your HTML &lt;head&gt;</p>
                                 </div>
                             </li>
                         </ol>
