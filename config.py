@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Pricing Configuration
     payment_amount_paise: int = 90000
     payment_currency: str = "INR"
+    free_audit_limit: int = 1  # Number of free audits per user
     
     # Security
     jwt_secret: str = "dev-secret-change-in-production"
