@@ -76,6 +76,11 @@ async def request_early_access(
     db = get_database()
     settings = get_settings()
     
+    # Use service client to bypass RLS for early_access_requests table
+    service_db = db.get_service_client()
+    
+    print(f"\n🎁 [Early Access] Request from {user.get('email')} for job {request.job_id}")
+    
     user_id = user.get("id")
     user_email = user.get("email")
     
@@ -97,7 +102,8 @@ async def request_early_access(
     
     # 3. Check if user already has an early access code (ONE PER LIFETIME)
     try:
-        existing = db.client.table("early_access_requests").select("*").eq("user_id", user_id).execute()
+        existing = service_db.table("early_access_requests").select("*").eq("user_id", user_id).execute()
+        print(f"   Existing check: found {len(existing.data) if existing.data else 0} records")
         if existing.data and len(existing.data) > 0:
             existing_record = existing.data[0]
             existing_code = existing_record.get("trial_code")
@@ -126,8 +132,9 @@ async def request_early_access(
     
     # 4. Check if slots are available
     try:
-        count_result = db.client.table("early_access_requests").select("id", count="exact").execute()
+        count_result = service_db.table("early_access_requests").select("id", count="exact").execute()
         current_count = count_result.count or 0
+        print(f"   Slots check: {current_count}/{MAX_EARLY_ACCESS_SLOTS} used")
         
         if current_count >= MAX_EARLY_ACCESS_SLOTS:
             raise HTTPException(
@@ -142,15 +149,13 @@ async def request_early_access(
     
     # 5. Generate unique trial code
     trial_code = generate_code(prefix="EARLY", length=8)
+    print(f"   Generated code: {trial_code}")
     
     # 6. Save to trial_codes table (Use Service Client to bypass RLS)
     try:
         expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
         
-        # Use service client for admin operations
-        service_db = db.get_service_client()
-        
-        service_db.table("trial_codes").insert({
+        result = service_db.table("trial_codes").insert({
             "code": trial_code,
             "code_type": TrialCodeType.SINGLE_USE.value,
             "max_uses": 1,
@@ -161,13 +166,16 @@ async def request_early_access(
             "note": f"Early Access for {user_email}",
             "is_active": True
         }).execute()
+        print(f"   ✅ trial_codes insert: {result.data is not None}")
     except Exception as e:
-        print(f"Error creating trial code: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate code")
+        print(f"   ❌ Error creating trial code: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to generate code: {e}")
     
     # 7. Save to early_access_requests table (Use Service Client)
     try:
-        service_db.table("early_access_requests").insert({
+        result = service_db.table("early_access_requests").insert({
             "user_id": user_id,
             "user_email": user_email,
             "trial_code": trial_code,
@@ -181,16 +189,20 @@ async def request_early_access(
             "testimonial_status": "pending",  # pending, reminder_sent, received
             "followup_at": (datetime.utcnow() + timedelta(days=FOLLOWUP_DAYS)).isoformat()
         }).execute()
+        print(f"   ✅ early_access_requests insert: {result.data is not None}")
     except Exception as e:
-        print(f"Error saving early access request: {e}")
+        print(f"   ❌ Error saving early access request: {e}")
+        import traceback
+        traceback.print_exc()
         # Continue anyway - the trial code was created
     
     # 8. Apply code to the job immediately
     await db.update_job(request.job_id, payment_id=f"TRIAL:{trial_code}")
+    print(f"   ✅ Job {request.job_id} updated with payment_id TRIAL:{trial_code}")
     
     # 9. Increment usage on trial code
     try:
-        db.client.table("trial_codes").update({
+        service_db.table("trial_codes").update({
             "current_uses": 1
         }).eq("code", trial_code).execute()
     except:
@@ -247,9 +259,13 @@ async def get_slots_remaining():
     db = get_database()
     
     try:
-        count_result = db.client.table("early_access_requests").select("id", count="exact").execute()
+        # Use service client to bypass RLS for accurate public count
+        service_db = db.get_service_client()
+        count_result = service_db.table("early_access_requests").select("id", count="exact").execute()
         current_count = count_result.count or 0
         remaining = max(0, MAX_EARLY_ACCESS_SLOTS - current_count)
+        
+        print(f"[Early Access] Slots check: used={current_count}, remaining={remaining}")
         
         return {
             "total_slots": MAX_EARLY_ACCESS_SLOTS,
@@ -258,11 +274,14 @@ async def get_slots_remaining():
             "is_available": remaining > 0
         }
     except Exception as e:
-        print(f"Error getting slots: {e}")
+        print(f"❌ Error getting slots: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             "total_slots": MAX_EARLY_ACCESS_SLOTS,
             "remaining_slots": MAX_EARLY_ACCESS_SLOTS,  # Assume available if error
-            "is_available": True
+            "is_available": True,
+            "error": str(e)  # Include error for debugging
         }
 
 
