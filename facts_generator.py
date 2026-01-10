@@ -296,6 +296,12 @@ class FactsJsonLdGenerator:
         if entities["PERSON"]:
             author_name = entities["PERSON"][0]["text"]
         
+        # Extract services/products from content
+        services = self._extract_services(all_content)
+        products = self._extract_products(all_content)
+        features = self._extract_features(all_content)
+        pricing = self._extract_pricing(all_content)
+        
         metadata = {
             "title": homepage.title if homepage else domain,
             "description": homepage.description if homepage else "",
@@ -303,6 +309,12 @@ class FactsJsonLdGenerator:
             "author_name": author_name,
             "org_name": org_name,
             "publish_date": entities["DATE"][0]["text"] if entities["DATE"] else None,
+            "services": services,
+            "products": products,
+            "features": features,
+            "price": pricing.get("price") if pricing else None,
+            "currency": pricing.get("currency", "USD") if pricing else None,
+            "price_description": pricing.get("description", "") if pricing else None,
         }
         
         # Add org to entities list if not already there
@@ -410,6 +422,104 @@ class FactsJsonLdGenerator:
                     found_profiles.append(url)
         
         return found_profiles
+    
+    def _extract_services(self, content: str) -> List[str]:
+        """Extract services offered from content."""
+        services = []
+        
+        # Look for service patterns
+        patterns = [
+            r'(?:our|we\s+offer|providing|services\s+include)[:\s]+([A-Z][^.]{10,60})',
+            r'(?:service|solution|offering)[:\s]+([A-Z][a-zA-Z\s]{10,50})',
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for match in matches[:5]:
+                clean = match.strip().rstrip(',.')
+                if len(clean) > 5 and clean not in services:
+                    services.append(clean)
+        
+        return services[:5]
+    
+    def _extract_products(self, content: str) -> List[str]:
+        """Extract products from content."""
+        products = []
+        
+        # Look for product patterns
+        patterns = [
+            r'(?:product|device|system|platform|tool|software)[:\s]+([A-Z][a-zA-Z0-9\s-]{5,40})',
+            r'introducing\s+([A-Z][a-zA-Z0-9\s-]{5,40})',
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for match in matches[:5]:
+                clean = match.strip().rstrip(',.')
+                if len(clean) > 3 and clean not in products:
+                    products.append(clean)
+        
+        return products[:5]
+    
+    def _extract_features(self, content: str) -> List[str]:
+        """Extract key features from content."""
+        features = []
+        
+        # Look for feature patterns
+        patterns = [
+            r'(?:feature|capability|benefit|advantage)[:\s]+([A-Za-z][^.]{10,80})',
+            r'•\s*([A-Z][^•\n]{10,60})',  # Bullet points
+            r'✓\s*([A-Z][^✓\n]{10,60})',  # Checkmarks
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, content)
+            for match in matches[:10]:
+                clean = match.strip().rstrip(',.')
+                if len(clean) > 10 and clean not in features:
+                    features.append(clean)
+        
+        return features[:10]
+    
+    def _extract_pricing(self, content: str) -> Optional[Dict]:
+        """Extract pricing information from content."""
+        
+        # USD pricing
+        usd_patterns = [
+            r'\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)\s*(?:/|per)?\s*(month|year|mo|yr)?',
+            r'(\d{1,5})\s*(?:USD|dollars)',
+        ]
+        
+        # INR pricing
+        inr_patterns = [
+            r'₹\s*(\d{1,7}(?:,\d{3})*(?:\.\d{2})?)',
+            r'(?:Rs\.?|INR)\s*(\d{1,7}(?:,\d{3})*)',
+        ]
+        
+        # Check USD
+        for pattern in usd_patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match:
+                price = match.group(1).replace(',', '')
+                period = match.group(2) if len(match.groups()) > 1 else ""
+                return {
+                    "price": f"${price}",
+                    "currency": "USD",
+                    "description": f"Starting at ${price}" + (f" per {period}" if period else "")
+                }
+        
+        # Check INR
+        for pattern in inr_patterns:
+            match = re.search(pattern, content)
+            if match:
+                price = match.group(1).replace(',', '')
+                return {
+                    "price": f"₹{price}",
+                    "currency": "INR",
+                    "description": f"Starting at ₹{price}"
+                }
+        
+        return None
     
     # ============================================
     # STEP 2: FACT EXTRACTION
@@ -826,6 +936,87 @@ class FactsJsonLdGenerator:
                 "mainEntity": faq_questions[:7]  # Limit to 7 FAQs
             }
         
+        # ---- 5. ARTICLE/FACTS LIST - Include all extracted facts ----
+        facts_collection = []
+        
+        # Add statistics as Claim objects
+        for fact in facts:
+            if fact.type == FactType.STATISTIC and fact.confidence >= 0.8:
+                facts_collection.append({
+                    "@type": "Claim",
+                    "@id": f"{base_url}/#fact-{fact.id}",
+                    "text": fact.statement,
+                    "appearance": {
+                        "@type": "WebPage",
+                        "@id": f"{base_url}/"
+                    }
+                })
+        
+        # Add high-confidence claims
+        for fact in facts:
+            if fact.type == FactType.CLAIM and fact.confidence >= 0.85:
+                facts_collection.append({
+                    "@type": "Claim",
+                    "@id": f"{base_url}/#fact-{fact.id}",
+                    "text": fact.statement,
+                    "appearance": {
+                        "@type": "WebPage", 
+                        "@id": f"{base_url}/"
+                    }
+                })
+        
+        # Add quotable statements
+        for fact in facts:
+            if fact.type == FactType.QUOTE and fact.is_quotable:
+                facts_collection.append({
+                    "@type": "Quotation",
+                    "@id": f"{base_url}/#quote-{fact.id}",
+                    "text": fact.statement
+                })
+        
+        # Add primary answer as Article abstract if available
+        primary_fact = next((f for f in facts if f.type == FactType.PRIMARY_ANSWER), None)
+        if primary_fact:
+            organization["description"] = primary_fact.statement[:500]
+        
+        # ---- 6. SERVICES/PRODUCTS from metadata ----
+        services = metadata.get("services", [])
+        products = metadata.get("products", [])
+        
+        if services or products:
+            items = []
+            for i, service in enumerate(services[:5]):
+                items.append({
+                    "@type": "Service",
+                    "@id": f"{base_url}/#service-{i+1}",
+                    "name": service,
+                    "provider": {"@id": f"{base_url}/#organization"}
+                })
+            
+            for i, product in enumerate(products[:5]):
+                items.append({
+                    "@type": "Product",
+                    "@id": f"{base_url}/#product-{i+1}",
+                    "name": product,
+                    "manufacturer": {"@id": f"{base_url}/#organization"}
+                })
+            
+            if items:
+                organization["makesOffer"] = items
+        
+        # ---- 7. KEY STATISTICS as PropertyValues ----
+        key_stats = []
+        for fact in facts[:5]:  # Top 5 stats
+            if fact.type == FactType.STATISTIC:
+                key_stats.append({
+                    "@type": "PropertyValue",
+                    "name": "Key Statistic",
+                    "value": fact.statement
+                })
+        
+        if key_stats:
+            organization["additionalProperty"] = key_stats
+        
         # ---- BUILD FINAL @GRAPH ----
         graph = [organization, website]
         
@@ -835,9 +1026,22 @@ class FactsJsonLdGenerator:
         if faq_page:
             graph.append(faq_page)
         
+        # Add facts as separate Claim entities
+        for fc in facts_collection[:10]:  # Limit to 10 facts in graph
+            graph.append(fc)
+        
         schema = {
             "@context": "https://schema.org",
-            "@graph": graph
+            "@graph": graph,
+            # Also include a flat facts array for easy access
+            "facts": [
+                {
+                    "type": f.type.value if hasattr(f.type, 'value') else str(f.type),
+                    "statement": f.statement,
+                    "confidence": f.confidence
+                }
+                for f in facts[:15]
+            ]
         }
         
         return schema
